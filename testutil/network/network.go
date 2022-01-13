@@ -274,6 +274,7 @@ func New(t *testing.T, cfg Config) *Network {
 
 		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
 		require.NoError(t, err)
+
 		nodeIDs[i] = nodeID
 		valPubKeys[i] = pubKey
 
