@@ -37,6 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+<<<<<<< HEAD
 ### Features
 
 * [\#11430](https://github.com/cosmos/cosmos-sdk/pull/11430) Introduce a new `grpc-only` flag, such that when enabled, will start the node in a query-only mode. Note, gRPC MUST be enabled with this flag.
@@ -107,6 +108,9 @@ Ref: https://keepachangelog.com/en/1.0.0/
 * (types) [\#10076](https://github.com/cosmos/cosmos-sdk/pull/10076) Significantly speedup and lower allocations for `Coins.String()`.
 * (auth) [\#10022](https://github.com/cosmos/cosmos-sdk/pull/10022) `AuthKeeper` interface in `x/auth` now includes a function `HasAccount`.
 * [\#10393](https://github.com/cosmos/cosmos-sdk/pull/10393) Add `HasSupply` method to bank keeper to ensure that input denom actually exists on chain.
+=======
+## [v0.44.6](https://github.com/cosmos/cosmos-sdk/releases/tag/v0.44.6) - 2022-02-02
+>>>>>>> 6e97bf892... chore: v0.44.6 changelog and release notes (#10953)
 
 ### Bug Fixes
 
