@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -39,6 +40,10 @@ var (
 	KeyBondDenom         = []byte("BondDenom")
 	KeyHistoricalEntries = []byte("HistoricalEntries")
 	KeyPowerReduction    = []byte("PowerReduction")
+
+	// ReBondDemon regex, Bond denominations can be N letters long and support lowercase letters,
+	//followed by a comma and more letters.
+	ReBondDemon = regexp.MustCompile(`(^[a-z]+([,][a-z]+)?)+$`)
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -186,10 +191,17 @@ func validateBondDenom(i interface{}) error {
 		return errors.New("bond denom cannot be blank")
 	}
 
-	if err := sdk.ValidateDenom(v); err != nil {
+	if err := ValidateBondDenom(v); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func ValidateBondDenom(denom string) error {
+	if !ReBondDemon.MatchString(denom) {
+		return fmt.Errorf("invalid denom: %s", denom)
+	}
 	return nil
 }
 
