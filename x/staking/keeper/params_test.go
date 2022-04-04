@@ -44,3 +44,18 @@ func (suite *KeeperTestSuite) TestIsBondDenomSupported() {
 	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "rst"))
 	suite.Require().False(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "stake"))
 }
+
+func (suite *KeeperTestSuite) TestBondDenomSlice() {
+	suite.SetupTest()
+
+	//validate for default sdk bond denom
+	expParams := types.DefaultParams()
+	var expected = []string{"stake"}
+	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
+
+	expParams.BondDenom = "rio,rst"
+	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
+
+	expected = []string{"rio", "rst"}
+	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
+}

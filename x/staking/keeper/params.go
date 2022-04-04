@@ -40,6 +40,14 @@ func (k Keeper) BondDenom(ctx sdk.Context) (res string) {
 	return
 }
 
+func (k Keeper) BondDenomSlice(ctx sdk.Context) (res []string) {
+	var supportedDenom string
+	k.paramstore.Get(ctx, types.KeyBondDenom, &supportedDenom)
+	res = strings.Split(supportedDenom, ",")
+
+	return res
+}
+
 func (k Keeper) IsBondDenomSupported(ctx sdk.Context, denom string) bool {
 	var supportedDenom string
 	k.paramstore.Get(ctx, types.KeyBondDenom, &supportedDenom)
