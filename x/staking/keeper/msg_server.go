@@ -49,10 +49,9 @@ func (k msgServer) CreateValidator(goCtx context.Context, msg *types.MsgCreateVa
 		return nil, types.ErrValidatorPubKeyExists
 	}
 
-	bondDenom := k.BondDenom(ctx)
-	if msg.Value.Denom != bondDenom {
+	if supported := k.IsBondDenomSupported(ctx, msg.Value.Denom); !supported  {
 		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Value.Denom, bondDenom,
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s", msg.Value.Denom,
 		)
 	}
 
@@ -101,7 +100,7 @@ func (k msgServer) CreateValidator(goCtx context.Context, msg *types.MsgCreateVa
 	// move coins from the msg.Address account to a (self-delegation) delegator account
 	// the validator account and global shares are updated within here
 	// NOTE source will always be from a wallet which are unbonded
-	_, err = k.Keeper.Delegate(ctx, delegatorAddress, msg.Value.Amount, types.Unbonded, validator, true)
+	_, err = k.Keeper.Delegate(ctx, delegatorAddress, msg.Value, types.Unbonded, validator, true)
 	if err != nil {
 		return nil, err
 	}
@@ -203,15 +202,15 @@ func (k msgServer) Delegate(goCtx context.Context, msg *types.MsgDelegate) (*typ
 		return nil, err
 	}
 
-	bondDenom := k.BondDenom(ctx)
-	if msg.Amount.Denom != bondDenom {
+	if supported := k.IsBondDenomSupported(ctx, msg.Amount.Denom); !supported  {
 		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s", msg.Amount.Denom,
 		)
 	}
 
 	// NOTE: source funds are always unbonded
-	newShares, err := k.Keeper.Delegate(ctx, delegatorAddress, msg.Amount.Amount, types.Unbonded, validator, true)
+	// todo realio fork changed
+	newShares, err := k.Keeper.Delegate(ctx, delegatorAddress, msg.Amount, types.Unbonded, validator, true)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +254,7 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 	if err != nil {
 		return nil, err
 	}
+	// todo realio fork investigate this call
 	shares, err := k.ValidateUnbondAmount(
 		ctx, delegatorAddress, valSrcAddr, msg.Amount.Amount,
 	)
@@ -262,10 +262,9 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 		return nil, err
 	}
 
-	bondDenom := k.BondDenom(ctx)
-	if msg.Amount.Denom != bondDenom {
+	if supported := k.IsBondDenomSupported(ctx, msg.Amount.Denom); !supported  {
 		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s", msg.Amount.Denom,
 		)
 	}
 
@@ -275,7 +274,7 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 	}
 
 	completionTime, err := k.BeginRedelegation(
-		ctx, delegatorAddress, valSrcAddr, valDstAddr, shares,
+		ctx, delegatorAddress, valSrcAddr, valDstAddr, shares, msg.Amount,
 	)
 	if err != nil {
 		return nil, err
@@ -331,14 +330,13 @@ func (k msgServer) Undelegate(goCtx context.Context, msg *types.MsgUndelegate) (
 		return nil, err
 	}
 
-	bondDenom := k.BondDenom(ctx)
-	if msg.Amount.Denom != bondDenom {
+	if supported := k.IsBondDenomSupported(ctx, msg.Amount.Denom); !supported  {
 		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Amount.Denom, bondDenom,
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s", msg.Amount.Denom,
 		)
 	}
 
-	completionTime, err := k.Keeper.Undelegate(ctx, delegatorAddress, addr, shares)
+	completionTime, err := k.Keeper.Undelegate(ctx, delegatorAddress, addr, shares, msg.Amount)
 	if err != nil {
 		return nil, err
 	}
