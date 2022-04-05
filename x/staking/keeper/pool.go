@@ -17,16 +17,16 @@ func (k Keeper) GetNotBondedPool(ctx sdk.Context) (notBondedPool authtypes.Modul
 }
 
 // bondedTokensToNotBonded transfers coins from the bonded to the not bonded pool within staking
-func (k Keeper) bondedTokensToNotBonded(ctx sdk.Context, tokens sdk.Int) {
-	coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), tokens))
+func (k Keeper) bondedTokensToNotBonded(ctx sdk.Context, coin sdk.Coin) {
+	coins := sdk.NewCoins(coin)
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.BondedPoolName, types.NotBondedPoolName, coins); err != nil {
 		panic(err)
 	}
 }
 
 // notBondedTokensToBonded transfers coins from the not bonded to the bonded pool within staking
-func (k Keeper) notBondedTokensToBonded(ctx sdk.Context, tokens sdk.Int) {
-	coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), tokens))
+func (k Keeper) notBondedTokensToBonded(ctx sdk.Context, coin sdk.Coin) {
+	coins := sdk.NewCoins(coin)
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, types.NotBondedPoolName, types.BondedPoolName, coins); err != nil {
 		panic(err)
 	}
