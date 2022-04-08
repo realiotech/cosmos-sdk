@@ -50,7 +50,6 @@ func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 		notBonded := sdk.ZeroInt()
 		bondedPool := k.GetBondedPool(ctx)
 		notBondedPool := k.GetNotBondedPool(ctx)
-		bondDenom := k.BondDenom(ctx)
 
 		k.IterateValidators(ctx, func(_ int64, validator types.ValidatorI) bool {
 			switch validator.GetStatus() {
@@ -66,14 +65,24 @@ func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 
 		k.IterateUnbondingDelegations(ctx, func(_ int64, ubd types.UnbondingDelegation) bool {
 			for _, entry := range ubd.Entries {
-				notBonded = notBonded.Add(entry.Balance)
+				notBonded = notBonded.Add(entry.Balance.Amount)
 			}
 			return false
 		})
 
-		poolBonded := k.bankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom)
-		poolNotBonded := k.bankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom)
-		broken := !poolBonded.Amount.Equal(bonded) || !poolNotBonded.Amount.Equal(notBonded)
+		poolBonded := k.bankKeeper.GetAllBalances(ctx, bondedPool.GetAddress())
+		poolBondedSum := sdk.ZeroInt()
+		for _, c := range poolBonded {
+			poolBondedSum = poolBondedSum.Add(c.Amount)
+		}
+
+		poolNotBonded := k.bankKeeper.GetAllBalances(ctx, notBondedPool.GetAddress())
+		poolNotBondedSum := sdk.ZeroInt()
+		for _, c := range poolNotBonded {
+			poolNotBondedSum = poolNotBondedSum.Add(c.Amount)
+		}
+
+		broken := !poolBondedSum.Equal(bonded) || !poolNotBondedSum.Equal(notBonded)
 
 		// Bonded tokens should equal sum of tokens with bonded validators
 		// Not-bonded tokens should equal unbonding delegations	plus tokens on unbonded validators
@@ -86,7 +95,7 @@ func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 				"module accounts total (bonded + not bonded):\n"+
 				"\tModule Accounts' tokens: %v\n"+
 				"\tsum tokens:              %v\n",
-			poolBonded, bonded, poolNotBonded, notBonded, poolBonded.Add(poolNotBonded), bonded.Add(notBonded))), broken
+			poolBondedSum, bonded, poolNotBondedSum, notBonded, poolBondedSum.Add(poolNotBondedSum), bonded.Add(notBonded))), broken
 	}
 }
 

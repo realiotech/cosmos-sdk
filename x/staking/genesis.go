@@ -85,7 +85,7 @@ func InitGenesis(
 
 		for _, entry := range ubd.Entries {
 			keeper.InsertUBDQueue(ctx, ubd, entry.CompletionTime)
-			notBondedTokens = notBondedTokens.Add(entry.Balance)
+			notBondedTokens = notBondedTokens.Add(entry.Balance.Amount)
 		}
 	}
 
