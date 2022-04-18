@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -21,6 +22,7 @@ type KeeperTestSuite struct {
 	app         *simapp.SimApp
 	ctx         sdk.Context
 	addrs       []sdk.AccAddress
+	addrVals       []sdk.ValAddress
 	vals        []types.Validator
 	queryClient types.QueryClient
 }
@@ -35,7 +37,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 
-	addrs, _, validators := createValidators(suite.T(), ctx, app, []int64{9, 8, 7})
+	addrs, valAddrs, validators := createValidators(suite.T(), ctx, app, []int64{9, 8, 7})
 	header := tmproto.Header{
 		ChainID: "HelloChain",
 		Height:  5,
@@ -48,7 +50,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	hi := types.NewHistoricalInfo(header, sortedVals, app.StakingKeeper.PowerReduction(ctx))
 	app.StakingKeeper.SetHistoricalInfo(ctx, 5, &hi)
 
-	suite.app, suite.ctx, suite.queryClient, suite.addrs, suite.vals = app, ctx, queryClient, addrs, validators
+	suite.app, suite.ctx, suite.queryClient, suite.addrs, suite.addrVals, suite.vals = app, ctx, queryClient, addrs, valAddrs, validators
 }
 func TestParams(t *testing.T) {
 	app := simapp.Setup(false)
@@ -65,6 +67,19 @@ func TestParams(t *testing.T) {
 	app.StakingKeeper.SetParams(ctx, expParams)
 	resParams = app.StakingKeeper.GetParams(ctx)
 	require.True(t, expParams.Equal(resParams))
+}
+
+// helper function to fund any AccAddress with coins
+func initAccountWithCoins(app *simapp.SimApp, ctx sdk.Context, addr sdk.AccAddress, coins sdk.Coins) {
+	err := app.BankKeeper.MintCoins(ctx, minttypes.ModuleName, coins)
+	if err != nil {
+		panic(err)
+	}
+
+	err = app.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, addr, coins)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestKeeperTestSuite(t *testing.T) {
