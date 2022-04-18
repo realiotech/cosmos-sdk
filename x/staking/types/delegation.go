@@ -350,10 +350,10 @@ func NewRedelegationResponse(
 
 // NewRedelegationEntryResponse creates a new RedelegationEntryResponse instance.
 func NewRedelegationEntryResponse(
-	creationHeight int64, completionTime time.Time, sharesDst sdk.Dec, initialBalance, balance sdk.Coin) RedelegationEntryResponse {
+	creationHeight int64, completionTime time.Time, sharesDst sdk.Dec, initialBalance sdk.Coin, balance sdk.Int) RedelegationEntryResponse {
 	return RedelegationEntryResponse{
 		RedelegationEntry: NewRedelegationEntry(creationHeight, completionTime, initialBalance, sharesDst),
-		Balance:           balance.Amount,
+		Balance:           balance,
 	}
 }
 

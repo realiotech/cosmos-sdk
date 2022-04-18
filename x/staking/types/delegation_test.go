@@ -111,8 +111,8 @@ func TestDelegationResponses(t *testing.T) {
 func TestRedelegationResponses(t *testing.T) {
 	cdc := codec.NewLegacyAmino()
 	entries := []types.RedelegationEntryResponse{
-		types.NewRedelegationEntryResponse(0, time.Unix(0, 0), sdk.NewDec(5), sdk.NewCoin("rio", sdk.NewInt(100)), sdk.NewCoin("rio", sdk.NewInt(100))),
-		types.NewRedelegationEntryResponse(0, time.Unix(0, 0), sdk.NewDec(5), sdk.NewCoin("rio", sdk.NewInt(100)), sdk.NewCoin("rio", sdk.NewInt(100))),
+		types.NewRedelegationEntryResponse(0, time.Unix(0, 0), sdk.NewDec(5), sdk.NewCoin("rio", sdk.NewInt(100)), sdk.NewInt(100)),
+		types.NewRedelegationEntryResponse(0, time.Unix(0, 0), sdk.NewDec(5), sdk.NewCoin("rio", sdk.NewInt(100)), sdk.NewInt(100)),
 	}
 	rdr1 := types.NewRedelegationResponse(sdk.AccAddress(valAddr1), valAddr2, valAddr3, entries)
 	rdr2 := types.NewRedelegationResponse(sdk.AccAddress(valAddr2), valAddr1, valAddr3, entries)
