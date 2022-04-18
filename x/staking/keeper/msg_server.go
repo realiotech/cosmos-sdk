@@ -90,6 +90,8 @@ func (k msgServer) CreateValidator(goCtx context.Context, msg *types.MsgCreateVa
 
 	validator.MinSelfDelegation = msg.MinSelfDelegation
 
+	validator.BondDenom = msg.Value.Denom
+
 	k.SetValidator(ctx, validator)
 	k.SetValidatorByConsAddr(ctx, validator)
 	k.SetNewValidatorByPowerIndex(ctx, validator)
