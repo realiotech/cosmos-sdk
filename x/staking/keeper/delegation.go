@@ -664,6 +664,7 @@ func (k Keeper) Delegate(
 	// if subtractAccount is true then we are
 	// performing a delegation and not a redelegation, thus the source tokens are
 	// all non bonded
+	coins := sdk.NewCoins(sdk.NewCoin(coin.Denom, coin.Amount))
 	if subtractAccount {
 		if tokenSrc == types.Bonded {
 			panic("delegation token source cannot be bonded")
@@ -680,7 +681,6 @@ func (k Keeper) Delegate(
 			panic("invalid validator status")
 		}
 
-		coins := sdk.NewCoins(sdk.NewCoin(coin.Denom, coin.Amount))
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, delegatorAddress, sendName, coins); err != nil {
 			return sdk.Dec{}, err
 		}
@@ -693,10 +693,10 @@ func (k Keeper) Delegate(
 			// do nothing
 		case (tokenSrc == types.Unbonded || tokenSrc == types.Unbonding) && validator.IsBonded():
 			// transfer pools
-			k.notBondedTokensToBonded(ctx, coin)
+			k.notBondedTokensToBonded(ctx, coins)
 		case tokenSrc == types.Bonded && !validator.IsBonded():
 			// transfer pools
-			k.bondedTokensToNotBonded(ctx, coin)
+			k.bondedTokensToNotBonded(ctx, coins)
 		default:
 			panic("unknown token source bond status")
 		}
@@ -830,7 +830,7 @@ func (k Keeper) Undelegate(
 	// transfer the validator tokens to the not bonded pool
 	returnCoin := sdk.NewCoin(coin.Denom, returnAmount)
 	if validator.IsBonded() {
-		k.bondedTokensToNotBonded(ctx, returnCoin)
+		k.bondedTokensToNotBonded(ctx, sdk.NewCoins(returnCoin))
 	}
 
 	completionTime := ctx.BlockHeader().Time.Add(k.UnbondingTime(ctx))

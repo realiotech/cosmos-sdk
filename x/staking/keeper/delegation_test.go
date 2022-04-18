@@ -147,7 +147,7 @@ func TestUnbondingDelegation(t *testing.T) {
 		valAddrs[0],
 		0,
 		time.Unix(0, 0).UTC(),
-		sdk.NewCoin("rio", sdk.NewInt(100)),
+		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)),
 	)
 
 	// set and retrieve a record
@@ -157,7 +157,7 @@ func TestUnbondingDelegation(t *testing.T) {
 	require.Equal(t, ubd, resUnbond)
 
 	// modify a records, save, and retrieve
-	ubd.Entries[0].Balance = sdk.NewCoin("rio", sdk.NewInt(100))
+	ubd.Entries[0].Balance = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
 	app.StakingKeeper.SetUnbondingDelegation(ctx, ubd)
 
 	resUnbonds := app.StakingKeeper.GetUnbondingDelegations(ctx, delAddrs[0], 5)
@@ -194,7 +194,7 @@ func TestUnbondDelegation(t *testing.T) {
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
 
-	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, notBondedPool.GetName(), sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), startTokens))))
+	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, notBondedPool.GetName(), sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))))
 	app.AccountKeeper.SetModuleAccount(ctx, notBondedPool)
 
 	// create a validator and a delegator to that validator
@@ -232,8 +232,9 @@ func TestUnbondingDelegationsMaxEntries(t *testing.T) {
 
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
 
-	bondDenom := app.StakingKeeper.BondDenom(ctx)
+	bondDenom := sdk.DefaultBondDenom
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
+	bondedPool := app.StakingKeeper.GetBondedPool(ctx)
 
 	require.NoError(t, simapp.FundModuleAccount(app.BankKeeper, ctx, notBondedPool.GetName(), sdk.NewCoins(sdk.NewCoin(bondDenom, startTokens))))
 	app.AccountKeeper.SetModuleAccount(ctx, notBondedPool)
@@ -253,31 +254,31 @@ func TestUnbondingDelegationsMaxEntries(t *testing.T) {
 
 	maxEntries := app.StakingKeeper.MaxEntries(ctx)
 
-	oldBonded := app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	oldNotBonded := app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	oldBonded := app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	oldNotBonded := app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 
 	// should all pass
 	var completionTime time.Time
 	for i := uint32(0); i < maxEntries; i++ {
 		var err error
-		completionTime, err = app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+		completionTime, err = app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1)))
 		require.NoError(t, err)
 	}
 
-	newBonded := app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	newNotBonded := app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	newBonded := app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	newNotBonded := app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 	require.True(sdk.IntEq(t, newBonded, oldBonded.SubRaw(int64(maxEntries))))
 	require.True(sdk.IntEq(t, newNotBonded, oldNotBonded.AddRaw(int64(maxEntries))))
 
-	oldBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	oldNotBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	oldBonded = app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	oldNotBonded = app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 
 	// an additional unbond should fail due to max entries
-	_, err := app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1)))
 	require.Error(t, err)
 
-	newBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	newNotBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	newBonded = app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	newNotBonded = app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 
 	require.True(sdk.IntEq(t, newBonded, oldBonded))
 	require.True(sdk.IntEq(t, newNotBonded, oldNotBonded))
@@ -287,19 +288,19 @@ func TestUnbondingDelegationsMaxEntries(t *testing.T) {
 	_, err = app.StakingKeeper.CompleteUnbonding(ctx, addrDels[0], addrVals[0])
 	require.NoError(t, err)
 
-	newBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	newNotBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	newBonded = app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	newNotBonded = app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 	require.True(sdk.IntEq(t, newBonded, oldBonded))
 	require.True(sdk.IntEq(t, newNotBonded, oldNotBonded.SubRaw(int64(maxEntries))))
 
-	oldNotBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	oldNotBonded = app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 
 	// unbonding  should work again
-	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[0], addrVals[0], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1)))
 	require.NoError(t, err)
 
-	newBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetBondedPool(ctx).GetAddress(), bondDenom).Amount
-	newNotBonded = app.BankKeeper.GetBalance(ctx, app.StakingKeeper.GetNotBondedPool(ctx).GetAddress(), bondDenom).Amount
+	newBonded = app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount
+	newNotBonded = app.BankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount
 	require.True(sdk.IntEq(t, newBonded, oldBonded.SubRaw(1)))
 	require.True(sdk.IntEq(t, newNotBonded, oldNotBonded.AddRaw(1)))
 }
@@ -312,7 +313,7 @@ func TestUndelegateSelfDelegationBelowMinSelfDelegation(t *testing.T) {
 	addrDels := simapp.AddTestAddrsIncremental(app, ctx, 1, sdk.NewInt(10000))
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 	delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	delCoins := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), delTokens))
+	delCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 
 	//create a validator with a self-delegation
 	validator := teststaking.NewValidator(t, addrVals[0], PKs[0])
@@ -353,7 +354,7 @@ func TestUndelegateSelfDelegationBelowMinSelfDelegation(t *testing.T) {
 	app.StakingKeeper.SetDelegation(ctx, delegation)
 
 	val0AccAddr := sdk.AccAddress(addrVals[0].Bytes())
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], app.StakingKeeper.TokensFromConsensusPower(ctx, 6).ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], app.StakingKeeper.TokensFromConsensusPower(ctx, 6).ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -369,7 +370,7 @@ func TestUndelegateSelfDelegationBelowMinSelfDelegation(t *testing.T) {
 func TestUndelegateFromUnbondingValidator(t *testing.T) {
 	_, app, ctx := createTestInput()
 	delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	delCoins := sdk.NewCoins(sdk.NewCoin("rio", delTokens))
+	delCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 
 	addrDels := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(0))
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
@@ -422,7 +423,7 @@ func TestUndelegateFromUnbondingValidator(t *testing.T) {
 
 	// unbond the all self-delegation to put validator in unbonding state
 	val0AccAddr := sdk.AccAddress(addrVals[0])
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -440,14 +441,14 @@ func TestUndelegateFromUnbondingValidator(t *testing.T) {
 	ctx = ctx.WithBlockTime(blockTime2)
 
 	// unbond some of the other delegation's shares
-	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], sdk.NewDec(6), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], sdk.NewDec(6), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// retrieve the unbonding delegation
 	ubd, found := app.StakingKeeper.GetUnbondingDelegation(ctx, addrDels[1], addrVals[0])
 	require.True(t, found)
 	require.Len(t, ubd.Entries, 1)
-	require.True(t, ubd.Entries[0].Balance.Equal(sdk.NewInt(6)))
+	require.True(t, ubd.Entries[0].Balance.Amount.Equal(sdk.NewInt(6)))
 	assert.Equal(t, blockHeight2, ubd.Entries[0].CreationHeight)
 	assert.True(t, blockTime2.Add(params.UnbondingTime).Equal(ubd.Entries[0].CompletionTime))
 }
@@ -455,7 +456,7 @@ func TestUndelegateFromUnbondingValidator(t *testing.T) {
 func TestUndelegateFromUnbondedValidator(t *testing.T) {
 	_, app, ctx := createTestInput()
 	delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	delCoins := sdk.NewCoins(sdk.NewCoin("rio", delTokens))
+	delCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 
 	addrDels := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(0))
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
@@ -497,7 +498,7 @@ func TestUndelegateFromUnbondedValidator(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Unix(333, 0))
 
 	// unbond the all self-delegation to put validator in unbonding state
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], valTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)),)
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], valTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -520,12 +521,12 @@ func TestUndelegateFromUnbondedValidator(t *testing.T) {
 
 	// unbond some of the other delegation's shares
 	unbondTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 6)
-	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], unbondTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], unbondTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// unbond rest of the other delegation's shares
 	remainingTokens := delTokens.Sub(unbondTokens)
-	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], remainingTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], remainingTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	//  now validator should be deleted from state
@@ -536,7 +537,7 @@ func TestUndelegateFromUnbondedValidator(t *testing.T) {
 func TestUnbondingAllDelegationFromValidator(t *testing.T) {
 	_, app, ctx := createTestInput()
 	delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	delCoins := sdk.NewCoins(sdk.NewCoin("rio", delTokens))
+	delCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 
 	addrDels := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(0))
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
@@ -581,14 +582,14 @@ func TestUnbondingAllDelegationFromValidator(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Unix(333, 0))
 
 	// unbond the all self-delegation to put validator in unbonding state
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], valTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], valTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
 	applyValidatorSetUpdates(t, ctx, app.StakingKeeper, 1)
 
 	// unbond all the remaining delegation
-	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], delTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrDels[1], addrVals[0], delTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// validator should still be in state and still be in unbonding state
@@ -613,7 +614,7 @@ func TestGetRedelegationsFromSrcValidator(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	rd := types.NewRedelegation(addrDels[0], addrVals[0], addrVals[1], 0,
-		time.Unix(0, 0), sdk.NewCoin("rio", sdk.NewInt(100)),
+		time.Unix(0, 0), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)),
 		sdk.NewDec(5))
 
 	// set and retrieve a record
@@ -640,7 +641,7 @@ func TestRedelegation(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	rd := types.NewRedelegation(addrDels[0], addrVals[0], addrVals[1], 0,
-		time.Unix(0, 0).UTC(), sdk.NewCoin("rio", sdk.NewInt(100)),
+		time.Unix(0, 0).UTC(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)),
 		sdk.NewDec(5))
 
 	// test shouldn't have and redelegations
@@ -703,7 +704,7 @@ func TestRedelegateToSameValidator(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	valTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	startCoins := sdk.NewCoins(sdk.NewCoin("rio", valTokens))
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, valTokens))
 
 	// add bonded tokens to pool for delegations
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
@@ -721,7 +722,7 @@ func TestRedelegateToSameValidator(t *testing.T) {
 	selfDelegation := types.NewDelegation(val0AccAddr, addrVals[0], issuedShares)
 	app.StakingKeeper.SetDelegation(ctx, selfDelegation)
 
-	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[0], sdk.NewDec(5), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[0], sdk.NewDec(5), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.Error(t, err)
 }
 
@@ -732,7 +733,7 @@ func TestRedelegationMaxEntries(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-	startCoins := sdk.NewCoins(sdk.NewCoin("rio", startTokens))
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))
 
 	// add bonded tokens to pool for delegations
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
@@ -763,12 +764,12 @@ func TestRedelegationMaxEntries(t *testing.T) {
 	var completionTime time.Time
 	for i := uint32(0); i < maxEntries; i++ {
 		var err error
-		completionTime, err = app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+		completionTime, err = app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 		require.NoError(t, err)
 	}
 
 	// an additional redelegation should fail due to max entries
-	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.Error(t, err)
 
 	// mature redelegations
@@ -777,7 +778,7 @@ func TestRedelegationMaxEntries(t *testing.T) {
 	require.NoError(t, err)
 
 	// redelegation should work again
-	_, err = app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], sdk.NewDec(1), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 }
 
@@ -788,7 +789,7 @@ func TestRedelegateSelfDelegation(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 30)
-	startCoins := sdk.NewCoins(sdk.NewCoin("rio", startTokens))
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))
 
 	// add bonded tokens to pool for delegations
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
@@ -825,7 +826,7 @@ func TestRedelegateSelfDelegation(t *testing.T) {
 	delegation := types.NewDelegation(addrDels[0], addrVals[0], issuedShares)
 	app.StakingKeeper.SetDelegation(ctx, delegation)
 
-	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], delTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.BeginRedelegation(ctx, val0AccAddr, addrVals[0], addrVals[1], delTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -844,7 +845,7 @@ func TestRedelegateFromUnbondingValidator(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 30)
-	startCoins := sdk.NewCoins(sdk.NewCoin("rio", startTokens))
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))
 
 	// add bonded tokens to pool for delegations
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
@@ -886,7 +887,7 @@ func TestRedelegateFromUnbondingValidator(t *testing.T) {
 	ctx = ctx.WithBlockHeader(header)
 
 	// unbond the all self-delegation to put validator in unbonding state
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -908,7 +909,7 @@ func TestRedelegateFromUnbondingValidator(t *testing.T) {
 
 	// unbond some of the other delegation's shares
 	redelegateTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 6)
-	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrDels[1], addrVals[0], addrVals[1], redelegateTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrDels[1], addrVals[0], addrVals[1], redelegateTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// retrieve the unbonding delegation
@@ -926,7 +927,7 @@ func TestRedelegateFromUnbondedValidator(t *testing.T) {
 	addrVals := simapp.ConvertAddrsToValAddrs(addrDels)
 
 	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 30)
-	startCoins := sdk.NewCoins(sdk.NewCoin("rio", startTokens))
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))
 
 	// add bonded tokens to pool for delegations
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
@@ -965,7 +966,7 @@ func TestRedelegateFromUnbondedValidator(t *testing.T) {
 	ctx = ctx.WithBlockTime(time.Unix(333, 0))
 
 	// unbond the all self-delegation to put validator in unbonding state
-	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err := app.StakingKeeper.Undelegate(ctx, val0AccAddr, addrVals[0], delTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// end block
@@ -982,7 +983,7 @@ func TestRedelegateFromUnbondedValidator(t *testing.T) {
 
 	// redelegate some of the delegation's shares
 	redelegationTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 6)
-	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrDels[1], addrVals[0], addrVals[1], redelegationTokens.ToDec(), sdk.NewCoin("rio", sdk.NewInt(100)))
+	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrDels[1], addrVals[0], addrVals[1], redelegationTokens.ToDec(), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
 	require.NoError(t, err)
 
 	// no red should have been found
