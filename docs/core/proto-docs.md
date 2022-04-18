@@ -6776,6 +6776,7 @@ multiplied by exchange rate.
 | `unbonding_time` | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | unbonding_time defines, if unbonding, the min time for the validator to complete unbonding. |
 | `commission` | [Commission](#cosmos.staking.v1beta1.Commission) |  | commission defines the commission parameters. |
 | `min_self_delegation` | [string](#string) |  | min_self_delegation is the validator's self declared minimum self delegation. |
+| `bond_denom` | [string](#string) |  | bond_denom defines the bondable coin denomination. |
 
 
 
