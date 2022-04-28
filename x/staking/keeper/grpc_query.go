@@ -450,15 +450,23 @@ func (k Querier) DelegatorValidators(c context.Context, req *types.QueryDelegato
 // Pool queries the pool info
 func (k Querier) Pool(c context.Context, _ *types.QueryPoolRequest) (*types.QueryPoolResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	bondDenom := k.BondDenom(ctx)
 	bondedPool := k.GetBondedPool(ctx)
 	notBondedPool := k.GetNotBondedPool(ctx)
 
-	pool := types.NewPool(
-		k.bankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount,
-		k.bankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount,
-	)
+	notBondedBalances := k.bankKeeper.GetAllBalances(ctx, notBondedPool.GetAddress())
+	bondedBalances := k.bankKeeper.GetAllBalances(ctx, bondedPool.GetAddress())
 
+	bondedBalanceSum := sdk.ZeroInt()
+	for _, c := range bondedBalances {
+		bondedBalanceSum = bondedBalanceSum.Add(c.Amount)
+	}
+
+	notBondedBalanceSum := sdk.ZeroInt()
+	for _, c := range notBondedBalances {
+		notBondedBalanceSum = notBondedBalanceSum.Add(c.Amount)
+	}
+
+	pool := types.NewPool(notBondedBalanceSum, bondedBalanceSum)
 	return &types.QueryPoolResponse{Pool: pool}, nil
 }
 
