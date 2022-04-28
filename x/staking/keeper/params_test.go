@@ -22,12 +22,12 @@ func (suite *KeeperTestSuite) TestSetParamsSetMultiTokenBondDenom() {
 	expParams := types.DefaultParams()
 	suite.Require().Equal(expParams.BondDenom, sdk.DefaultBondDenom)
 
-	expParams.BondDenom = "rio,rst"
+	expParams.BondDenom = "urio,urst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
 	//validate save
 	resParams := suite.app.StakingKeeper.GetParams(suite.ctx)
-	suite.Require().Equal(resParams.BondDenom, "rio,rst")
+	suite.Require().Equal(resParams.BondDenom, "urio,urst")
 }
 
 func (suite *KeeperTestSuite) TestIsBondDenomSupported() {
@@ -35,13 +35,13 @@ func (suite *KeeperTestSuite) TestIsBondDenomSupported() {
 
 	//validate for default sdk bond denom
 	expParams := types.DefaultParams()
-	expParams.BondDenom = "rio,rst"
+	expParams.BondDenom = "urio,urst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
-	res := suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "rio")
+	res := suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urio")
 	suite.Require().True(res)
-	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "rio"))
-	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "rst"))
+	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urio"))
+	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urst"))
 	suite.Require().False(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "stake"))
 }
 
@@ -50,12 +50,12 @@ func (suite *KeeperTestSuite) TestBondDenomSlice() {
 
 	//validate for default sdk bond denom
 	expParams := types.DefaultParams()
-	var expected = []string{"rio"}
+	var expected = []string{"urio"}
 	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
 
-	expParams.BondDenom = "rio,rst"
+	expParams.BondDenom = "urio,urst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
-	expected = []string{"rio", "rst"}
+	expected = []string{"urio", "urst"}
 	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
 }

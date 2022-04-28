@@ -10,14 +10,14 @@ import (
 
 // Prevent strconv unused error
 var (
-	pk1 = ed25519.GenPrivKey().PubKey()
-	addr1 = sdk.AccAddress(pk1.Address())
-	valAddr1 = sdk.ValAddress(pk1.Address())
-	pk2 = ed25519.GenPrivKey().PubKey()
-	addr2 = sdk.AccAddress(pk2.Address())
-	valAddr2 = sdk.ValAddress(pk2.Address())
-	coinRio = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
-	coinRst = sdk.NewInt64Coin("rst", 1000)
+	pk1         = ed25519.GenPrivKey().PubKey()
+	addr1       = sdk.AccAddress(pk1.Address())
+	valAddr1    = sdk.ValAddress(pk1.Address())
+	pk2         = ed25519.GenPrivKey().PubKey()
+	addr2       = sdk.AccAddress(pk2.Address())
+	valAddr2    = sdk.ValAddress(pk2.Address())
+	coinRio     = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
+	coinRst     = sdk.NewInt64Coin("urst", 1000)
 	commission1 = types.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 )
 
@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) TestMsgServerCreateValidatorMultipleDenoms() {
 	suite.SetupTest()
 
 	params := suite.app.StakingKeeper.GetParams(suite.ctx)
-	params.BondDenom = "rio,rst"
+	params.BondDenom = "urio,urst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, params)
 
 	// test rst, supported denom
