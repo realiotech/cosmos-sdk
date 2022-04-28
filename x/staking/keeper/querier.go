@@ -412,7 +412,6 @@ func queryHistoricalInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper, legac
 }
 
 func queryPool(ctx sdk.Context, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
-	bondDenom := k.BondDenom(ctx)
 	bondedPool := k.GetBondedPool(ctx)
 	notBondedPool := k.GetNotBondedPool(ctx)
 
@@ -420,10 +419,20 @@ func queryPool(ctx sdk.Context, k Keeper, legacyQuerierCdc *codec.LegacyAmino) (
 		return nil, errors.New("pool accounts haven't been set")
 	}
 
-	pool := types.NewPool(
-		k.bankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), bondDenom).Amount,
-		k.bankKeeper.GetBalance(ctx, bondedPool.GetAddress(), bondDenom).Amount,
-	)
+	notBondedBalances := k.bankKeeper.GetAllBalances(ctx, notBondedPool.GetAddress())
+	bondedBalances := k.bankKeeper.GetAllBalances(ctx, bondedPool.GetAddress())
+
+	bondedBalanceSum := sdk.ZeroInt()
+	for _, c := range bondedBalances {
+		bondedBalanceSum = bondedBalanceSum.Add(c.Amount)
+	}
+
+	notBondedBalanceSum := sdk.ZeroInt()
+	for _, c := range notBondedBalances {
+		notBondedBalanceSum = notBondedBalanceSum.Add(c.Amount)
+	}
+
+	pool := types.NewPool(notBondedBalanceSum, bondedBalanceSum)
 
 	res, err := codec.MarshalJSONIndent(legacyQuerierCdc, pool)
 	if err != nil {
@@ -461,7 +470,7 @@ func DelegationToDelegationResponse(ctx sdk.Context, k Keeper, del types.Delegat
 		delegatorAddress,
 		del.GetValidatorAddr(),
 		del.Shares,
-		sdk.NewCoin(k.BondDenom(ctx), val.TokensFromShares(del.Shares).TruncateInt()),
+		sdk.NewCoin(val.BondDenom, val.TokensFromShares(del.Shares).TruncateInt()),
 	), nil
 }
 
