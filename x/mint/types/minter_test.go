@@ -82,6 +82,27 @@ func TestBlockProvision(t *testing.T) {
 	}
 }
 
+func TestAnnualProvisionMaxSupply(t *testing.T) {
+	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
+	params := DefaultParams()
+
+
+	tests := []struct {
+		totalSupply int64
+		expProvisions    sdk.Dec
+	}{
+		{75000000000000, sdk.NewDec(0)},
+		{35000000000000, sdk.NewDec(4000000000000)},
+	}
+	for i, tc := range tests {
+		provisions := minter.NextAnnualProvisions(params, sdk.NewInt(tc.totalSupply))
+
+		require.True(t, tc.expProvisions.Equal(provisions),
+			"test: %v\n\tExp: %v\n\tGot: %v\n",
+			i, tc.expProvisions, provisions)
+	}
+}
+
 // Benchmarking :)
 // previously using sdk.Int operations:
 // BenchmarkBlockProvision-4 5000000 220 ns/op
