@@ -50,7 +50,7 @@ func (suite *KeeperTestSuite) TestBondDenomSlice() {
 
 	//validate for default sdk bond denom
 	expParams := types.DefaultParams()
-	var expected = []string{"urio"}
+	var expected = []string{"stake"}
 	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
 
 	expParams.BondDenom = "urio,urst"
