@@ -44,7 +44,6 @@ func ValidateAccountInGenesis(
 
 	var stakingData stakingtypes.GenesisState
 	cdc.MustUnmarshalJSON(appGenesisState[stakingtypes.ModuleName], &stakingData)
-	bondDenom := stakingData.Params.BondDenom
 
 	var err error
 
@@ -58,10 +57,10 @@ func ValidateAccountInGenesis(
 			// ensure that account is in genesis
 			if accAddress.Equals(addr) {
 				// ensure account contains enough funds of default bond denom
-				if coins.AmountOf(bondDenom).GT(accCoins.AmountOf(bondDenom)) {
+				if coins.AmountOf("urio").GT(accCoins.AmountOf("urio")) ||
+					coins.AmountOf("urst").GT(accCoins.AmountOf("urst")) {
 					err = fmt.Errorf(
-						"account %s has a balance in genesis, but it only has %v%s available to stake, not %v%s",
-						addr, accCoins.AmountOf(bondDenom), bondDenom, coins.AmountOf(bondDenom), bondDenom,
+						"account %s has a balance in genesis, but it does not have enough to stake", addr,
 					)
 
 					return true

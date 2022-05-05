@@ -232,7 +232,7 @@ func (k Keeper) RemoveUnbondingDelegation(ctx sdk.Context, ubd types.UnbondingDe
 // the given addresses. It creates the unbonding delegation if it does not exist
 func (k Keeper) SetUnbondingDelegationEntry(
 	ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
-	creationHeight int64, minTime time.Time, balance sdk.Int,
+	creationHeight int64, minTime time.Time, balance sdk.Coin,
 ) types.UnbondingDelegation {
 	ubd, found := k.GetUnbondingDelegation(ctx, delegatorAddr, validatorAddr)
 	if found {
@@ -415,12 +415,12 @@ func (k Keeper) SetRedelegation(ctx sdk.Context, red types.Redelegation) {
 	store.Set(types.GetREDByValDstIndexKey(delegatorAddress, valSrcAddr, valDestAddr), []byte{})
 }
 
-// SetUnbondingDelegationEntry adds an entry to the unbonding delegation at
-// the given addresses. It creates the unbonding delegation if it does not exist
+// SetRedelegationEntry adds an entry to the redelegation at
+// the given addresses. It creates the redelegation if it does not exist
 func (k Keeper) SetRedelegationEntry(ctx sdk.Context,
 	delegatorAddr sdk.AccAddress, validatorSrcAddr,
 	validatorDstAddr sdk.ValAddress, creationHeight int64,
-	minTime time.Time, balance sdk.Int,
+	minTime time.Time, balance sdk.Coin,
 	sharesSrc, sharesDst sdk.Dec) types.Redelegation {
 	red, found := k.GetRedelegation(ctx, delegatorAddr, validatorSrcAddr, validatorDstAddr)
 	if found {
@@ -545,7 +545,7 @@ func (k Keeper) DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTime time
 // Delegate performs a delegation, set/update everything necessary within the store.
 // tokenSrc indicates the bond status of the incoming funds.
 func (k Keeper) Delegate(
-	ctx sdk.Context, delAddr sdk.AccAddress, bondAmt sdk.Int, tokenSrc types.BondStatus,
+	ctx sdk.Context, delAddr sdk.AccAddress, coin sdk.Coin, tokenSrc types.BondStatus,
 	validator types.Validator, subtractAccount bool,
 ) (newShares sdk.Dec, err error) {
 	// In some situations, the exchange rate becomes invalid, e.g. if
@@ -576,6 +576,7 @@ func (k Keeper) Delegate(
 	// if subtractAccount is true then we are
 	// performing a delegation and not a redelegation, thus the source tokens are
 	// all non bonded
+	coins := sdk.NewCoins(sdk.NewCoin(coin.Denom, coin.Amount))
 	if subtractAccount {
 		if tokenSrc == types.Bonded {
 			panic("delegation token source cannot be bonded")
@@ -592,7 +593,6 @@ func (k Keeper) Delegate(
 			panic("invalid validator status")
 		}
 
-		coins := sdk.NewCoins(sdk.NewCoin(k.BondDenom(ctx), bondAmt))
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, delegatorAddress, sendName, coins); err != nil {
 			return sdk.Dec{}, err
 		}
@@ -605,16 +605,16 @@ func (k Keeper) Delegate(
 			// do nothing
 		case (tokenSrc == types.Unbonded || tokenSrc == types.Unbonding) && validator.IsBonded():
 			// transfer pools
-			k.notBondedTokensToBonded(ctx, bondAmt)
+			k.notBondedTokensToBonded(ctx, coins)
 		case tokenSrc == types.Bonded && !validator.IsBonded():
 			// transfer pools
-			k.bondedTokensToNotBonded(ctx, bondAmt)
+			k.bondedTokensToNotBonded(ctx, coins)
 		default:
 			panic("unknown token source bond status")
 		}
 	}
 
-	_, newShares = k.AddValidatorTokensAndShares(ctx, validator, bondAmt)
+	_, newShares = k.AddValidatorTokensAndShares(ctx, validator, coin.Amount)
 
 	// Update delegation
 	delegation.Shares = delegation.Shares.Add(newShares)
@@ -723,7 +723,7 @@ func (k Keeper) getBeginInfo(
 // an unbonding object and inserting it into the unbonding queue which will be
 // processed during the staking EndBlocker.
 func (k Keeper) Undelegate(
-	ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, sharesAmount sdk.Dec,
+	ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, sharesAmount sdk.Dec, coin sdk.Coin,
 ) (time.Time, error) {
 	validator, found := k.GetValidator(ctx, valAddr)
 	if !found {
@@ -740,12 +740,13 @@ func (k Keeper) Undelegate(
 	}
 
 	// transfer the validator tokens to the not bonded pool
+	returnCoin := sdk.NewCoin(coin.Denom, returnAmount)
 	if validator.IsBonded() {
-		k.bondedTokensToNotBonded(ctx, returnAmount)
+		k.bondedTokensToNotBonded(ctx, sdk.NewCoins(returnCoin))
 	}
 
 	completionTime := ctx.BlockHeader().Time.Add(k.UnbondingTime(ctx))
-	ubd := k.SetUnbondingDelegationEntry(ctx, delAddr, valAddr, ctx.BlockHeight(), completionTime, returnAmount)
+	ubd := k.SetUnbondingDelegationEntry(ctx, delAddr, valAddr, ctx.BlockHeight(), completionTime, returnCoin)
 	k.InsertUBDQueue(ctx, ubd, completionTime)
 
 	return completionTime, nil
@@ -760,7 +761,6 @@ func (k Keeper) CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAd
 		return nil, types.ErrNoUnbondingDelegation
 	}
 
-	bondDenom := k.GetParams(ctx).BondDenom
 	balances := sdk.NewCoins()
 	ctxTime := ctx.BlockHeader().Time
 
@@ -778,14 +778,13 @@ func (k Keeper) CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAd
 
 			// track undelegation only when remaining or truncated shares are non-zero
 			if !entry.Balance.IsZero() {
-				amt := sdk.NewCoin(bondDenom, entry.Balance)
 				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-					ctx, types.NotBondedPoolName, delegatorAddress, sdk.NewCoins(amt),
+					ctx, types.NotBondedPoolName, delegatorAddress, sdk.NewCoins(entry.Balance),
 				); err != nil {
 					return nil, err
 				}
 
-				balances = balances.Add(amt)
+				balances = balances.Add(entry.Balance)
 			}
 		}
 	}
@@ -802,7 +801,7 @@ func (k Keeper) CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAd
 
 // begin unbonding / redelegation; create a redelegation record
 func (k Keeper) BeginRedelegation(
-	ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.ValAddress, sharesAmount sdk.Dec,
+	ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.ValAddress, sharesAmount sdk.Dec, coin sdk.Coin,
 ) (completionTime time.Time, err error) {
 	if bytes.Equal(valSrcAddr, valDstAddr) {
 		return time.Time{}, types.ErrSelfRedelegation
@@ -836,7 +835,9 @@ func (k Keeper) BeginRedelegation(
 		return time.Time{}, types.ErrTinyRedelegationAmount
 	}
 
-	sharesCreated, err := k.Delegate(ctx, delAddr, returnAmount, srcValidator.GetStatus(), dstValidator, false)
+	returnCoin := sdk.NewCoin(coin.Denom, returnAmount)
+
+	sharesCreated, err := k.Delegate(ctx, delAddr, returnCoin, srcValidator.GetStatus(), dstValidator, false)
 	if err != nil {
 		return time.Time{}, err
 	}
@@ -850,7 +851,7 @@ func (k Keeper) BeginRedelegation(
 
 	red := k.SetRedelegationEntry(
 		ctx, delAddr, valSrcAddr, valDstAddr,
-		height, completionTime, returnAmount, sharesAmount, sharesCreated,
+		height, completionTime, returnCoin, sharesAmount, sharesCreated,
 	)
 	k.InsertRedelegationQueue(ctx, red, completionTime)
 
@@ -868,7 +869,6 @@ func (k Keeper) CompleteRedelegation(
 		return nil, types.ErrNoRedelegation
 	}
 
-	bondDenom := k.GetParams(ctx).BondDenom
 	balances := sdk.NewCoins()
 	ctxTime := ctx.BlockHeader().Time
 
@@ -880,7 +880,7 @@ func (k Keeper) CompleteRedelegation(
 			i--
 
 			if !entry.InitialBalance.IsZero() {
-				balances = balances.Add(sdk.NewCoin(bondDenom, entry.InitialBalance))
+				balances = balances.Add(entry.InitialBalance)
 			}
 		}
 	}

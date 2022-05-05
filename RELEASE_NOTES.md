@@ -11,4 +11,3 @@ See the [Cosmos SDK v0.45.1  Changelog](https://github.com/cosmos/cosmos-sdk/blo
 
 **Full Diff**: https://github.com/cosmos/cosmos-sdk/compare/v0.45.0...v0.45.1
 
-

@@ -213,7 +213,7 @@ func getDelegatorUnbondingDelegationsSum(ctx sdk.Context, address, bondDenom str
 	res := sdk.NewCoins()
 	for _, i := range balance.UnbondingResponses {
 		for _, r := range i.Entries {
-			res = res.Add(sdk.NewCoin(bondDenom, r.Balance))
+			res = res.Add(sdk.NewCoin(bondDenom, r.Balance.Amount))
 		}
 	}
 
