@@ -16,7 +16,8 @@ var (
 	pk2         = ed25519.GenPrivKey().PubKey()
 	addr2       = sdk.AccAddress(pk2.Address())
 	valAddr2    = sdk.ValAddress(pk2.Address())
-	coinRio     = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
+	coinRio     = sdk.NewInt64Coin("urio", 1000)
+	coinDefault     = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
 	coinRst     = sdk.NewInt64Coin("urst", 1000)
 	commission1 = types.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 )
@@ -24,10 +25,10 @@ var (
 func (suite *KeeperTestSuite) TestMsgServerCreateValidator() {
 	suite.SetupTest()
 
-	initAccountWithCoins(suite.app, suite.ctx, addr1, sdk.NewCoins(coinRio))
+	initAccountWithCoins(suite.app, suite.ctx, addr1, sdk.NewCoins(coinDefault))
 	srv := keeper.NewMsgServerImpl(suite.app.StakingKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	expected, _ := types.NewMsgCreateValidator(valAddr1, pk1, coinRio, types.Description{}, commission1, sdk.OneInt())
+	expected, _ := types.NewMsgCreateValidator(valAddr1, pk1, coinDefault, types.Description{}, commission1, sdk.OneInt())
 
 	_, err := srv.CreateValidator(wctx, expected)
 	suite.Require().NoError(err)
@@ -35,7 +36,7 @@ func (suite *KeeperTestSuite) TestMsgServerCreateValidator() {
 	v, found := suite.app.StakingKeeper.GetValidator(suite.ctx, valAddr1)
 	suite.Require().True(found)
 	suite.Require().Equal(v.OperatorAddress, expected.ValidatorAddress)
-	suite.Require().Equal(v.BondDenom, coinRio.Denom)
+	suite.Require().Equal(v.BondDenom, coinDefault.Denom)
 	suite.Require().Equal(v.Commission.CommissionRates, expected.Commission)
 }
 
