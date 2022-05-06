@@ -57,8 +57,7 @@ func ValidateAccountInGenesis(
 			// ensure that account is in genesis
 			if accAddress.Equals(addr) {
 				// ensure account contains enough funds of default bond denom
-				if coins.AmountOf("urio").GT(accCoins.AmountOf("urio")) ||
-					coins.AmountOf("urst").GT(accCoins.AmountOf("urst")) {
+				if coins.IsAnyGT(accCoins) {
 					err = fmt.Errorf(
 						"account %s has a balance in genesis, but it does not have enough to stake", addr,
 					)

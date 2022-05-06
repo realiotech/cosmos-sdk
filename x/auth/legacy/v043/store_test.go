@@ -41,11 +41,11 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -66,7 +66,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -87,11 +87,11 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -110,7 +110,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -129,11 +129,11 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -151,11 +151,11 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
-				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(100), stakingtypes.Unbonded, validator, true)
+				_, err = app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -173,7 +173,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -194,7 +194,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -217,7 +217,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -240,7 +240,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -263,7 +263,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -292,7 +292,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 
 				app.AccountKeeper.SetAccount(ctx, account)
 
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(150), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(150)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -336,7 +336,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
 				// delegation of the original vesting
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(3666666670000), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(3666666670000)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -382,7 +382,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
 				// delegation of the original vesting
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(3666666670000), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(3666666670000)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -428,7 +428,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
 				// delegation of the original vesting
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(3666666670000), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(3666666670000)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -474,7 +474,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
 				// delegation of the original vesting
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(3666666670000), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(3666666670000)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -494,7 +494,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				app.AccountKeeper.SetAccount(ctx, delayedAccount)
 
 				// delegation of the original vesting
-				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewInt(300), stakingtypes.Unbonded, validator, true)
+				_, err := app.StakingKeeper.Delegate(ctx, delegatorAddr, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)), stakingtypes.Unbonded, validator, true)
 				require.NoError(t, err)
 
 				ctx = ctx.WithBlockTime(ctx.BlockTime().AddDate(1, 0, 0))
@@ -503,7 +503,7 @@ func TestMigrateVestingAccounts(t *testing.T) {
 				require.NoError(t, err)
 
 				// un-delegation of the original vesting
-				_, err = app.StakingKeeper.Undelegate(ctx, delegatorAddr, valAddr, sdk.NewDecFromInt(sdk.NewInt(300)))
+				_, err = app.StakingKeeper.Undelegate(ctx, delegatorAddr, valAddr, sdk.NewDecFromInt(sdk.NewInt(300)), sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(300)) )
 				require.NoError(t, err)
 			},
 			cleartTrackingFields,
@@ -678,7 +678,7 @@ func createValidator(t *testing.T, ctx sdk.Context, app *simapp.SimApp, powers i
 	require.NoError(t, app.StakingKeeper.SetValidatorByConsAddr(ctx, val1))
 	app.StakingKeeper.SetNewValidatorByPowerIndex(ctx, val1)
 
-	_, err = app.StakingKeeper.Delegate(ctx, addrs[0], valTokens, stakingtypes.Unbonded, val1, true)
+	_, err = app.StakingKeeper.Delegate(ctx, addrs[0], sdk.NewCoin(sdk.DefaultBondDenom, valTokens), stakingtypes.Unbonded, val1, true)
 	require.NoError(t, err)
 
 	_ = staking.EndBlocker(ctx, app.StakingKeeper)
