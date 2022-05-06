@@ -27,11 +27,7 @@ func TestGenerateSaveCoinKey(t *testing.T) {
 	kb, err := keyring.New(t.Name(), "test", t.TempDir(), nil)
 	require.NoError(t, err)
 
-<<<<<<< HEAD:testutil/key_test.go
 	addr, mnemonic, err := GenerateSaveCoinKey(kb, "keyname", "", false, hd.Secp256k1)
-=======
-	addr, mnemonic, err := server.GenerateSaveCoinKey(kb, "keyname", false, hd.Secp256k1)
->>>>>>> 845be8320... revert: "support custom mnemonics in in-process testing network (backport #10922) (#10935)" (#11083):server/init_test.go
 	require.NoError(t, err)
 
 	// Test key was actually saved
