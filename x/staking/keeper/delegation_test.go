@@ -147,7 +147,7 @@ func TestUnbondingDelegation(t *testing.T) {
 		valAddrs[0],
 		0,
 		time.Unix(0, 0).UTC(),
-		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)),
+		sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(5)),
 	)
 
 	// set and retrieve a record
@@ -157,7 +157,8 @@ func TestUnbondingDelegation(t *testing.T) {
 	require.Equal(t, ubd, resUnbond)
 
 	// modify a records, save, and retrieve
-	ubd.Entries[0].Balance = sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100))
+	expUnbond := sdk.NewInt(21)
+	ubd.Entries[0].Balance.Amount = expUnbond
 	app.StakingKeeper.SetUnbondingDelegation(ctx, ubd)
 
 	resUnbonds := app.StakingKeeper.GetUnbondingDelegations(ctx, delAddrs[0], 5)

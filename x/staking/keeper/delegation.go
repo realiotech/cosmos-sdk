@@ -191,7 +191,7 @@ func (k Keeper) GetDelegatorUnbonding(ctx sdk.Context, delegator sdk.AccAddress)
 	unbonding := sdk.ZeroInt()
 	k.IterateDelegatorUnbondingDelegations(ctx, delegator, func(ubd types.UnbondingDelegation) bool {
 		for _, entry := range ubd.Entries {
-			unbonding = unbonding.Add(entry.Balance)
+			unbonding = unbonding.Add(entry.Balance.Amount)
 		}
 		return false
 	})
