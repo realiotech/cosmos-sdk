@@ -22,12 +22,12 @@ func (suite *KeeperTestSuite) TestSetParamsSetMultiTokenBondDenom() {
 	expParams := types.DefaultParams()
 	suite.Require().Equal(expParams.BondDenom, sdk.DefaultBondDenom)
 
-	expParams.BondDenom = "urio,urst"
+	expParams.BondDenom = "ario,arst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
 	//validate save
 	resParams := suite.app.StakingKeeper.GetParams(suite.ctx)
-	suite.Require().Equal(resParams.BondDenom, "urio,urst")
+	suite.Require().Equal(resParams.BondDenom, "ario,arst")
 }
 
 func (suite *KeeperTestSuite) TestIsBondDenomSupported() {
@@ -35,13 +35,13 @@ func (suite *KeeperTestSuite) TestIsBondDenomSupported() {
 
 	//validate for default sdk bond denom
 	expParams := types.DefaultParams()
-	expParams.BondDenom = "urio,urst"
+	expParams.BondDenom = "ario,arst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
-	res := suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urio")
+	res := suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "ario")
 	suite.Require().True(res)
-	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urio"))
-	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "urst"))
+	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "ario"))
+	suite.Require().True(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "arst"))
 	suite.Require().False(suite.app.StakingKeeper.IsBondDenomSupported(suite.ctx, "stake"))
 }
 
@@ -53,9 +53,9 @@ func (suite *KeeperTestSuite) TestBondDenomSlice() {
 	var expected = []string{"stake"}
 	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
 
-	expParams.BondDenom = "urio,urst"
+	expParams.BondDenom = "ario,arst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, expParams)
 
-	expected = []string{"urio", "urst"}
+	expected = []string{"ario", "arst"}
 	suite.Require().Equal(suite.app.StakingKeeper.BondDenomSlice(suite.ctx), expected)
 }

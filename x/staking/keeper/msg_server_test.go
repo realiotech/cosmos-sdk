@@ -16,9 +16,9 @@ var (
 	pk2         = ed25519.GenPrivKey().PubKey()
 	addr2       = sdk.AccAddress(pk2.Address())
 	valAddr2    = sdk.ValAddress(pk2.Address())
-	coinRio     = sdk.NewInt64Coin("urio", 1000)
-	coinDefault     = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
-	coinRst     = sdk.NewInt64Coin("urst", 1000)
+	coinRio     = sdk.NewInt64Coin("ario", 1000)
+	coinDefault = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
+	coinRst     = sdk.NewInt64Coin("arst", 1000)
 	commission1 = types.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 )
 
@@ -57,7 +57,7 @@ func (suite *KeeperTestSuite) TestMsgServerCreateValidatorMultipleDenoms() {
 	suite.SetupTest()
 
 	params := suite.app.StakingKeeper.GetParams(suite.ctx)
-	params.BondDenom = "urio,urst"
+	params.BondDenom = "ario,arst"
 	suite.app.StakingKeeper.SetParams(suite.ctx, params)
 
 	// test rst, supported denom
