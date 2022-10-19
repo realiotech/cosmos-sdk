@@ -5,8 +5,6 @@
 //go:build !gofuzz && cgo
 // +build !gofuzz,cgo
 
-//
-//nolint:gocritic
 package secp256k1
 
 import (

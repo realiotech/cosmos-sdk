@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/iavl"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/store/types"
@@ -34,7 +33,7 @@ func randBytes(numBytes int) []byte {
 
 // make a tree with data from above and save it
 func newAlohaTree(t *testing.T, db dbm.DB) (*iavl.MutableTree, types.CommitID) {
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	for k, v := range treeData {
@@ -59,17 +58,13 @@ func TestLoadStore(t *testing.T) {
 	store := UnsafeNewStore(tree)
 
 	// Create non-pruned height H
-	updated, err := tree.Set([]byte("hello"), []byte("hallo"))
-	require.NoError(t, err)
-	require.True(t, updated)
+	require.True(t, tree.Set([]byte("hello"), []byte("hallo")))
 	hash, verH, err := tree.SaveVersion()
 	cIDH := types.CommitID{Version: verH, Hash: hash}
 	require.Nil(t, err)
 
 	// Create pruned height Hp
-	updated, err = tree.Set([]byte("hello"), []byte("hola"))
-	require.NoError(t, err)
-	require.True(t, updated)
+	require.True(t, tree.Set([]byte("hello"), []byte("hola")))
 	hash, verHp, err := tree.SaveVersion()
 	cIDHp := types.CommitID{Version: verHp, Hash: hash}
 	require.Nil(t, err)
@@ -77,9 +72,7 @@ func TestLoadStore(t *testing.T) {
 	// TODO: Prune this height
 
 	// Create current height Hc
-	updated, err = tree.Set([]byte("hello"), []byte("ciao"))
-	require.NoError(t, err)
-	require.True(t, updated)
+	require.True(t, tree.Set([]byte("hello"), []byte("ciao")))
 	hash, verHc, err := tree.SaveVersion()
 	cIDHc := types.CommitID{Version: verHc, Hash: hash}
 	require.Nil(t, err)
@@ -100,17 +93,17 @@ func TestLoadStore(t *testing.T) {
 	require.Equal(t, string(hcStore.Get([]byte("hello"))), "ciao")
 
 	// Querying a new store at some previous non-pruned height H
-	newHStore, err := LoadStore(db, log.NewNopLogger(), types.NewKVStoreKey("test"), cIDH, false, DefaultIAVLCacheSize, false)
+	newHStore, err := LoadStore(db, cIDH, false, DefaultIAVLCacheSize)
 	require.NoError(t, err)
 	require.Equal(t, string(newHStore.Get([]byte("hello"))), "hallo")
 
 	// Querying a new store at some previous pruned height Hp
-	newHpStore, err := LoadStore(db, log.NewNopLogger(), types.NewKVStoreKey("test"), cIDHp, false, DefaultIAVLCacheSize, false)
+	newHpStore, err := LoadStore(db, cIDHp, false, DefaultIAVLCacheSize)
 	require.NoError(t, err)
 	require.Equal(t, string(newHpStore.Get([]byte("hello"))), "hola")
 
 	// Querying a new store at current height H
-	newHcStore, err := LoadStore(db, log.NewNopLogger(), types.NewKVStoreKey("test"), cIDHc, false, DefaultIAVLCacheSize, false)
+	newHcStore, err := LoadStore(db, cIDHc, false, DefaultIAVLCacheSize)
 	require.NoError(t, err)
 	require.Equal(t, string(newHcStore.Get([]byte("hello"))), "ciao")
 }
@@ -120,8 +113,7 @@ func TestGetImmutable(t *testing.T) {
 	tree, cID := newAlohaTree(t, db)
 	store := UnsafeNewStore(tree)
 
-	updated, err := tree.Set([]byte("hello"), []byte("adios"))
-	require.True(t, updated)
+	require.True(t, tree.Set([]byte("hello"), []byte("adios")))
 	hash, ver, err := tree.SaveVersion()
 	cID = types.CommitID{Version: ver, Hash: hash}
 	require.Nil(t, err)
@@ -281,7 +273,7 @@ func TestIAVLIterator(t *testing.T) {
 func TestIAVLReverseIterator(t *testing.T) {
 	db := dbm.NewMemDB()
 
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	iavlStore := UnsafeNewStore(tree)
@@ -292,7 +284,7 @@ func TestIAVLReverseIterator(t *testing.T) {
 	iavlStore.Set([]byte{0x00, 0x02}, []byte("0 2"))
 	iavlStore.Set([]byte{0x01}, []byte("1"))
 
-	testReverseIterator := func(t *testing.T, start []byte, end []byte, expected []string) {
+	var testReverseIterator = func(t *testing.T, start []byte, end []byte, expected []string) {
 		iter := iavlStore.ReverseIterator(start, end)
 		var i int
 		for i = 0; iter.Valid(); iter.Next() {
@@ -314,7 +306,7 @@ func TestIAVLReverseIterator(t *testing.T) {
 
 func TestIAVLPrefixIterator(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	iavlStore := UnsafeNewStore(tree)
@@ -378,7 +370,7 @@ func TestIAVLPrefixIterator(t *testing.T) {
 
 func TestIAVLReversePrefixIterator(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	iavlStore := UnsafeNewStore(tree)
@@ -446,7 +438,7 @@ func nextVersion(iavl *Store) {
 
 func TestIAVLNoPrune(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	iavlStore := UnsafeNewStore(tree)
@@ -465,7 +457,7 @@ func TestIAVLNoPrune(t *testing.T) {
 
 func TestIAVLStoreQuery(t *testing.T) {
 	db := dbm.NewMemDB()
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(t, err)
 
 	iavlStore := UnsafeNewStore(tree)
@@ -569,7 +561,7 @@ func BenchmarkIAVLIteratorNext(b *testing.B) {
 	b.ReportAllocs()
 	db := dbm.NewMemDB()
 	treeSize := 1000
-	tree, err := iavl.NewMutableTree(db, cacheSize, false)
+	tree, err := iavl.NewMutableTree(db, cacheSize)
 	require.NoError(b, err)
 
 	for i := 0; i < treeSize; i++ {
@@ -603,7 +595,7 @@ func TestSetInitialVersion(t *testing.T) {
 		{
 			"works with a mutable tree",
 			func(db *dbm.MemDB) *Store {
-				tree, err := iavl.NewMutableTree(db, cacheSize, false)
+				tree, err := iavl.NewMutableTree(db, cacheSize)
 				require.NoError(t, err)
 				store := UnsafeNewStore(tree)
 
@@ -613,7 +605,7 @@ func TestSetInitialVersion(t *testing.T) {
 		{
 			"throws error on immutable tree",
 			func(db *dbm.MemDB) *Store {
-				tree, err := iavl.NewMutableTree(db, cacheSize, false)
+				tree, err := iavl.NewMutableTree(db, cacheSize)
 				require.NoError(t, err)
 				store := UnsafeNewStore(tree)
 				_, version, err := store.tree.SaveVersion()

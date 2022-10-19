@@ -1,5 +1,4 @@
-//go:build ledger || test_ledger_mock
-// +build ledger test_ledger_mock
+//+build ledger test_ledger_mock
 
 package keyring
 
@@ -17,6 +16,7 @@ func TestInMemoryCreateLedger(t *testing.T) {
 	kb := NewInMemory()
 
 	ledger, err := kb.SaveLedgerKey("some_account", hd.Secp256k1, "cosmos", 118, 3, 1)
+
 	if err != nil {
 		require.Error(t, err)
 		require.Equal(t, "ledger nano S: support for ledger devices is not available in this executable", err.Error())

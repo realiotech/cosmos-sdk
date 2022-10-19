@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -214,7 +215,7 @@ $ %s gentx my-key-name 1000000stake --home=/path/to/home/dir --keyring-backend=o
 
 func makeOutputFilepath(rootDir, nodeID string) (string, error) {
 	writePath := filepath.Join(rootDir, "config", "gentx")
-	if err := tmos.EnsureDir(writePath, 0o700); err != nil {
+	if err := tmos.EnsureDir(writePath, 0700); err != nil {
 		return "", err
 	}
 
@@ -222,7 +223,7 @@ func makeOutputFilepath(rootDir, nodeID string) (string, error) {
 }
 
 func readUnsignedGenTxFile(clientCtx client.Context, r io.Reader) (sdk.Tx, error) {
-	bz, err := io.ReadAll(r)
+	bz, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +237,7 @@ func readUnsignedGenTxFile(clientCtx client.Context, r io.Reader) (sdk.Tx, error
 }
 
 func writeSignedGenTx(clientCtx client.Context, outputDocument string, tx sdk.Tx) error {
-	outputFile, err := os.OpenFile(outputDocument, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
+	outputFile, err := os.OpenFile(outputDocument, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}

@@ -4,6 +4,7 @@ package server
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -48,7 +49,7 @@ func ExportCmd(appExporter types.AppExporter, defaultNodeHome string) *cobra.Com
 					return err
 				}
 
-				genesis, err := os.ReadFile(config.GenesisFile())
+				genesis, err := ioutil.ReadFile(config.GenesisFile())
 				if err != nil {
 					return err
 				}

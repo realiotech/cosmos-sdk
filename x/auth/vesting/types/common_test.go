@@ -4,4 +4,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 )
 
-var app = simapp.Setup(false)
+var (
+	app = simapp.Setup(false)
+)

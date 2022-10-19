@@ -14,8 +14,6 @@ import (
 )
 
 // Simulation operation weights constants
-//
-//nolint:gosec
 const (
 	OpWeightMsgGrantAllowance  = "op_weight_msg_grant_fee_allowance"
 	OpWeightMsgRevokeAllowance = "op_weight_msg_grant_revoke_allowance"
@@ -30,6 +28,7 @@ func WeightedOperations(
 	appParams simtypes.AppParams, cdc codec.JSONCodec,
 	ak feegrant.AccountKeeper, bk feegrant.BankKeeper, k keeper.Keeper,
 ) simulation.WeightedOperations {
+
 	var (
 		weightMsgGrantAllowance  int
 		weightMsgRevokeAllowance int
@@ -86,6 +85,7 @@ func SimulateMsgGrantAllowance(ak feegrant.AccountKeeper, bk feegrant.BankKeeper
 			SpendLimit: spendableCoins,
 			Expiration: &oneYear,
 		}, granter.Address, grantee.Address)
+
 		if err != nil {
 			return simtypes.NoOpMsg(feegrant.ModuleName, TypeMsgGrantAllowance, err.Error()), nil, err
 		}
@@ -114,12 +114,20 @@ func SimulateMsgRevokeAllowance(ak feegrant.AccountKeeper, bk feegrant.BankKeepe
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
+
 		hasGrant := false
 		var granterAddr sdk.AccAddress
 		var granteeAddr sdk.AccAddress
 		k.IterateAllFeeAllowances(ctx, func(grant feegrant.Grant) bool {
-			granter := sdk.MustAccAddressFromBech32(grant.Granter)
-			grantee := sdk.MustAccAddressFromBech32(grant.Grantee)
+
+			granter, err := sdk.AccAddressFromBech32(grant.Granter)
+			if err != nil {
+				panic(err)
+			}
+			grantee, err := sdk.AccAddressFromBech32(grant.Grantee)
+			if err != nil {
+				panic(err)
+			}
 			granterAddr = granter
 			granteeAddr = grantee
 			hasGrant = true

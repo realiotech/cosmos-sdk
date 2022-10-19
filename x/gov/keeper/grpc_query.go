@@ -84,6 +84,7 @@ func (q Keeper) Proposals(c context.Context, req *types.QueryProposalsRequest) (
 
 		return false, nil
 	})
+
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -146,6 +147,7 @@ func (q Keeper) Votes(c context.Context, req *types.QueryVotesRequest) (*types.Q
 		votes = append(votes, vote)
 		return nil
 	})
+
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -234,6 +236,7 @@ func (q Keeper) Deposits(c context.Context, req *types.QueryDepositsRequest) (*t
 		deposits = append(deposits, deposit)
 		return nil
 	})
+
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

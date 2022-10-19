@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -180,7 +181,7 @@ func makeMultiSignCmd() func(cmd *cobra.Command, args []string) (err error) {
 			return
 		}
 
-		fp, err := os.OpenFile(outputDoc, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
+		fp, err := os.OpenFile(outputDoc, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 		if err != nil {
 			return err
 		}
@@ -247,7 +248,7 @@ func makeBatchMultisignCmd() func(cmd *cobra.Command, args []string) error {
 			txFactory = txFactory.WithSignMode(signingtypes.SignMode_SIGN_MODE_LEGACY_AMINO_JSON)
 		}
 
-		infile := os.Stdin
+		var infile = os.Stdin
 		if args[0] != "-" {
 			infile, err = os.Open(args[0])
 			defer func() {
@@ -375,14 +376,14 @@ func makeBatchMultisignCmd() func(cmd *cobra.Command, args []string) error {
 
 func unmarshalSignatureJSON(clientCtx client.Context, filename string) (sigs []signingtypes.SignatureV2, err error) {
 	var bytes []byte
-	if bytes, err = os.ReadFile(filename); err != nil {
+	if bytes, err = ioutil.ReadFile(filename); err != nil {
 		return
 	}
 	return clientCtx.TxConfig.UnmarshalSignatureJSON(bytes)
 }
 
 func readSignaturesFromFile(ctx client.Context, filename string) (sigs []signingtypes.SignatureV2, err error) {
-	bz, err := os.ReadFile(filename)
+	bz, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"os"
+	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -68,7 +68,7 @@ func (pcj ParamChangesJSON) ToParamChanges() []proposal.ParamChange {
 func ParseParamChangeProposalJSON(cdc *codec.LegacyAmino, proposalFile string) (ParamChangeProposalJSON, error) {
 	proposal := ParamChangeProposalJSON{}
 
-	contents, err := os.ReadFile(proposalFile)
+	contents, err := ioutil.ReadFile(proposalFile)
 	if err != nil {
 		return proposal, err
 	}

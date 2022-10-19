@@ -62,7 +62,6 @@ func (msg *TestMsg) GetSignBytes() []byte {
 	}
 	return sdk.MustSortJSON(bz)
 }
-
 func (msg *TestMsg) GetSigners() []sdk.AccAddress {
 	addrs := make([]sdk.AccAddress, len(msg.Signers))
 	for i, in := range msg.Signers {

@@ -1,4 +1,3 @@
-//go:build norace
 // +build norace
 
 package rest_test
@@ -54,7 +53,7 @@ func (s *IntegrationTestSuite) TestLegacyGetAllProposals() {
 				s.Require().NoError(val.ClientCtx.LegacyAmino.UnmarshalJSON(respJSON, &errResp))
 				s.Require().Equal(errResp.Error, tc.expErrMsg)
 			} else {
-				resp := rest.ResponseWithHeight{}
+				var resp = rest.ResponseWithHeight{}
 				err = val.ClientCtx.LegacyAmino.UnmarshalJSON(respJSON, &resp)
 				s.Require().NoError(err)
 
@@ -106,7 +105,7 @@ func (s *IntegrationTestSuite) TestLegacyGetVote() {
 
 				s.Require().Equal(errResp.Error, tc.expErrMsg)
 			} else {
-				resp := rest.ResponseWithHeight{}
+				var resp = rest.ResponseWithHeight{}
 				err = val.ClientCtx.LegacyAmino.UnmarshalJSON(respJSON, &resp)
 				s.Require().NoError(err)
 
@@ -154,7 +153,7 @@ func (s *IntegrationTestSuite) TestLegacyGetVotes() {
 
 				s.Require().Equal(errResp.Error, tc.expErrMsg)
 			} else {
-				resp := rest.ResponseWithHeight{}
+				var resp = rest.ResponseWithHeight{}
 				err = val.ClientCtx.LegacyAmino.UnmarshalJSON(respJSON, &resp)
 				s.Require().NoError(err)
 

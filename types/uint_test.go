@@ -293,7 +293,7 @@ func maxuint(i1, i2 uint64) uint64 {
 }
 
 func TestRoundTripMarshalToUint(t *testing.T) {
-	values := []uint64{
+	var values = []uint64{
 		0,
 		1,
 		1 << 10,

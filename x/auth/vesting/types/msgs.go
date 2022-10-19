@@ -11,7 +11,6 @@ const TypeMsgCreateVestingAccount = "msg_create_vesting_account"
 var _ sdk.Msg = &MsgCreateVestingAccount{}
 
 // NewMsgCreateVestingAccount returns a reference to a new MsgCreateVestingAccount.
-//
 //nolint:interfacer
 func NewMsgCreateVestingAccount(fromAddr, toAddr sdk.AccAddress, amount sdk.Coins, endTime int64, delayed bool) *MsgCreateVestingAccount {
 	return &MsgCreateVestingAccount{

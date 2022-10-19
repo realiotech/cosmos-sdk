@@ -214,8 +214,7 @@ func (suite *TestSuite) TestGRPCQueryGranterGrants() {
 		},
 		{
 			"valid case, pagination",
-			func() {
-			},
+			func() {},
 			false,
 			authz.QueryGranterGrantsRequest{
 				Granter: addrs[0].String(),
@@ -273,15 +272,6 @@ func (suite *TestSuite) TestGRPCQueryGranteeGrants() {
 				Grantee: addrs[0].String(),
 			},
 			1,
-		},
-		{
-			"valid case, no authorization found",
-			func() {},
-			false,
-			authz.QueryGranteeGrantsRequest{
-				Grantee: addrs[2].String(),
-			},
-			0,
 		},
 		{
 			"valid case, multiple authorization",

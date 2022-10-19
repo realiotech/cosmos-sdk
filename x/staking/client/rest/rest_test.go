@@ -1,4 +1,3 @@
-//go:build norace
 // +build norace
 
 package rest_test
@@ -46,7 +45,7 @@ func (s *IntegrationTestSuite) TestLegacyGetValidators() {
 
 				s.Require().Equal(errResp.Error, tc.expErrMsg)
 			} else {
-				resp := rest.ResponseWithHeight{}
+				var resp = rest.ResponseWithHeight{}
 				err = val.ClientCtx.LegacyAmino.UnmarshalJSON(respJSON, &resp)
 				s.Require().NoError(err)
 

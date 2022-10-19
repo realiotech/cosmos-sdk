@@ -44,6 +44,7 @@ func ExamplePrintRegisteredTypes() {
 }
 
 func TestNilEncodings(t *testing.T) {
+
 	// Check nil Signature.
 	var a, b []byte
 	checkAminoJSON(t, &a, &b, true)
@@ -58,4 +59,5 @@ func TestNilEncodings(t *testing.T) {
 	var e, f cryptotypes.PrivKey
 	checkAminoJSON(t, &e, &f, true)
 	require.EqualValues(t, e, f)
+
 }

@@ -80,7 +80,9 @@ func (suite *KeeperTestSuite) TestQueryEvidence() {
 }
 
 func (suite *KeeperTestSuite) TestQueryAllEvidence() {
-	var req *types.QueryAllEvidenceRequest
+	var (
+		req *types.QueryAllEvidenceRequest
+	)
 
 	testCases := []struct {
 		msg       string

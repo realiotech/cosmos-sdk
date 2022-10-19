@@ -79,7 +79,7 @@ func benchmarkRandomSet(b *testing.B, keysize int) {
 		kvstore.Set(k, value)
 	}
 
-	iter := kvstore.Iterator(nil, nil)
+	iter := kvstore.Iterator(keys[0], keys[b.N])
 	defer iter.Close()
 
 	for _ = iter.Key(); iter.Valid(); iter.Next() {
