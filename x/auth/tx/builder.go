@@ -134,7 +134,11 @@ func (w *wrapper) GetFee() sdk.Coins {
 func (w *wrapper) FeePayer() sdk.AccAddress {
 	feePayer := w.tx.AuthInfo.Fee.Payer
 	if feePayer != "" {
-		return sdk.MustAccAddressFromBech32(feePayer)
+		payerAddr, err := sdk.AccAddressFromBech32(feePayer)
+		if err != nil {
+			panic(err)
+		}
+		return payerAddr
 	}
 	// use first signer as default if no payer specified
 	return w.GetSigners()[0]
@@ -143,7 +147,11 @@ func (w *wrapper) FeePayer() sdk.AccAddress {
 func (w *wrapper) FeeGranter() sdk.AccAddress {
 	feePayer := w.tx.AuthInfo.Fee.Granter
 	if feePayer != "" {
-		return sdk.MustAccAddressFromBech32(feePayer)
+		granterAddr, err := sdk.AccAddressFromBech32(feePayer)
+		if err != nil {
+			panic(err)
+		}
+		return granterAddr
 	}
 	return nil
 }

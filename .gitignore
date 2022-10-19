@@ -6,7 +6,6 @@
 *.swm
 *.swn
 *.pyc
-.dccache
 
 # private files
 private[.-]*

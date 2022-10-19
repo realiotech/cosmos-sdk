@@ -1133,19 +1133,18 @@ func (suite *IntegrationTestSuite) TestBalanceTrackingEvents() {
 }
 
 func (suite *IntegrationTestSuite) getTestMetadata() []types.Metadata {
-	return []types.Metadata{
-		{
-			Name:        "Cosmos Hub Atom",
-			Symbol:      "ATOM",
-			Description: "The native staking token of the Cosmos Hub.",
-			DenomUnits: []*types.DenomUnit{
-				{"uatom", uint32(0), []string{"microatom"}},
-				{"matom", uint32(3), []string{"milliatom"}},
-				{"atom", uint32(6), nil},
-			},
-			Base:    "uatom",
-			Display: "atom",
+	return []types.Metadata{{
+		Name:        "Cosmos Hub Atom",
+		Symbol:      "ATOM",
+		Description: "The native staking token of the Cosmos Hub.",
+		DenomUnits: []*types.DenomUnit{
+			{"uatom", uint32(0), []string{"microatom"}},
+			{"matom", uint32(3), []string{"milliatom"}},
+			{"atom", uint32(6), nil},
 		},
+		Base:    "uatom",
+		Display: "atom",
+	},
 		{
 			Name:        "Token",
 			Symbol:      "TOKEN",

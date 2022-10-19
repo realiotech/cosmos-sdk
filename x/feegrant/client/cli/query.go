@@ -67,6 +67,7 @@ $ %s query feegrant grant [granter] [grantee]
 					Grantee: granteeAddr.String(),
 				},
 			)
+
 			if err != nil {
 				return err
 			}
@@ -83,15 +84,14 @@ $ %s query feegrant grant [granter] [grantee]
 // GetCmdQueryFeeGrantsByGrantee returns cmd to query for all grants for a grantee.
 func GetCmdQueryFeeGrantsByGrantee() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "grants-by-grantee [grantee]",
-		Aliases: []string{"grants"},
-		Args:    cobra.ExactArgs(1),
-		Short:   "Query all grants of a grantee",
+		Use:   "grants [grantee]",
+		Args:  cobra.ExactArgs(1),
+		Short: "Query all grants of a grantee",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries all the grants for a grantee address.
 
 Example:
-$ %s query feegrant grants-by-grantee [grantee]
+$ %s query feegrant grants [grantee]
 `, version.AppName),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -115,6 +115,7 @@ $ %s query feegrant grants-by-grantee [grantee]
 					Pagination: pageReq,
 				},
 			)
+
 			if err != nil {
 				return err
 			}
@@ -132,14 +133,14 @@ $ %s query feegrant grants-by-grantee [grantee]
 // GetCmdQueryFeeGrantsByGranter returns cmd to query for all grants by a granter.
 func GetCmdQueryFeeGrantsByGranter() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "grants-by-granter [granter]",
+		Use:   "grants [granter]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Query all grants by a granter",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Queries all the grants issued for a granter address.
 
 Example:
-$ %s query feegrant grants-by-granter [granter]
+$ %s query feegrant grants [granter]
 `, version.AppName),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -163,6 +164,7 @@ $ %s query feegrant grants-by-granter [granter]
 					Pagination: pageReq,
 				},
 			)
+
 			if err != nil {
 				return err
 			}

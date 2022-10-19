@@ -6,7 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 )
 
-var _ authz.Authorization = &SendAuthorization{}
+var (
+	_ authz.Authorization = &SendAuthorization{}
+)
 
 // NewSendAuthorization creates a new SendAuthorization object.
 func NewSendAuthorization(spendLimit sdk.Coins) *SendAuthorization {

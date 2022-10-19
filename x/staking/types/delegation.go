@@ -28,7 +28,6 @@ func (dvv DVVTriplet) String() string {
 }
 
 // NewDelegation creates a new delegation object
-//
 //nolint:interfacer
 func NewDelegation(delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, shares sdk.Dec) Delegation {
 	return Delegation{
@@ -61,11 +60,12 @@ func UnmarshalDelegation(cdc codec.BinaryCodec, value []byte) (delegation Delega
 }
 
 func (d Delegation) GetDelegatorAddr() sdk.AccAddress {
-	delAddr := sdk.MustAccAddressFromBech32(d.DelegatorAddress)
-
+	delAddr, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+	if err != nil {
+		panic(err)
+	}
 	return delAddr
 }
-
 func (d Delegation) GetValidatorAddr() sdk.ValAddress {
 	addr, err := sdk.ValAddressFromBech32(d.ValidatorAddress)
 	if err != nil {
@@ -113,7 +113,6 @@ func (e UnbondingDelegationEntry) IsMature(currentTime time.Time) bool {
 }
 
 // NewUnbondingDelegation - create a new unbonding delegation object
-//
 //nolint:interfacer
 func NewUnbondingDelegation(
 	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress,
@@ -335,7 +334,6 @@ func (d DelegationResponses) String() (out string) {
 }
 
 // NewRedelegationResponse crates a new RedelegationEntryResponse instance.
-//
 //nolint:interfacer
 func NewRedelegationResponse(
 	delegatorAddr sdk.AccAddress, validatorSrc, validatorDst sdk.ValAddress, entries []RedelegationEntryResponse,

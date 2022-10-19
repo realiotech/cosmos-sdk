@@ -6,6 +6,7 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestFeeAllowance() {
+
 	testCases := []struct {
 		name      string
 		req       *feegrant.QueryAllowanceRequest
@@ -58,7 +59,7 @@ func (suite *KeeperTestSuite) TestFeeAllowance() {
 			},
 			false,
 			func() {
-				suite.grantFeeAllowance(suite.addrs[0], suite.addrs[1])
+				grantFeeAllowance(suite)
 			},
 			func(response *feegrant.QueryAllowanceResponse) {
 				suite.Require().Equal(response.Allowance.Granter, suite.addrs[0].String())
@@ -123,7 +124,7 @@ func (suite *KeeperTestSuite) TestFeeAllowances() {
 			},
 			false,
 			func() {
-				suite.grantFeeAllowance(suite.addrs[0], suite.addrs[1])
+				grantFeeAllowance(suite)
 			},
 			func(resp *feegrant.QueryAllowancesResponse) {
 				suite.Require().Equal(len(resp.Allowances), 1)
@@ -189,7 +190,7 @@ func (suite *KeeperTestSuite) TestFeeAllowancesByGranter() {
 			},
 			false,
 			func() {
-				suite.grantFeeAllowance(suite.addrs[0], suite.addrs[1])
+				grantFeeAllowance(suite)
 			},
 			func(resp *feegrant.QueryAllowancesByGranterResponse) {
 				suite.Require().Equal(len(resp.Allowances), 1)
@@ -213,9 +214,9 @@ func (suite *KeeperTestSuite) TestFeeAllowancesByGranter() {
 	}
 }
 
-func (suite *KeeperTestSuite) grantFeeAllowance(granter, grantee sdk.AccAddress) {
+func grantFeeAllowance(suite *KeeperTestSuite) {
 	exp := suite.sdkCtx.BlockTime().AddDate(1, 0, 0)
-	err := suite.app.FeeGrantKeeper.GrantAllowance(suite.sdkCtx, granter, grantee, &feegrant.BasicAllowance{
+	err := suite.app.FeeGrantKeeper.GrantAllowance(suite.sdkCtx, suite.addrs[0], suite.addrs[1], &feegrant.BasicAllowance{
 		SpendLimit: sdk.NewCoins(sdk.NewInt64Coin("atom", 555)),
 		Expiration: &exp,
 	})

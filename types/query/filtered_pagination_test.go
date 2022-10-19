@@ -167,6 +167,7 @@ func (s *paginationTestSuite) TestReverseFilteredPaginations() {
 
 	s.T().Log("verify Reverse pagination returns valid result")
 	s.Require().Equal(balances[235:241].String(), balns.Sort().String())
+
 }
 
 func ExampleFilteredPaginate() {
@@ -216,6 +217,7 @@ func ExampleFilteredPaginate() {
 
 		return false, nil
 	})
+
 	if err != nil { // should return no error
 		fmt.Println(err)
 	}

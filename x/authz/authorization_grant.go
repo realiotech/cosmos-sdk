@@ -32,7 +32,9 @@ func NewGrant( /*blockTime time.Time, */ a Authorization, expiration time.Time) 
 	return g, nil
 }
 
-var _ cdctypes.UnpackInterfacesMessage = &Grant{}
+var (
+	_ cdctypes.UnpackInterfacesMessage = &Grant{}
+)
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (g Grant) UnpackInterfaces(unpacker cdctypes.AnyUnpacker) error {

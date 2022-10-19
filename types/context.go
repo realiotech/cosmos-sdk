@@ -61,7 +61,7 @@ func (c Context) EventManager() *EventManager { return c.eventManager }
 
 // clone the header before returning
 func (c Context) BlockHeader() tmproto.Header {
-	msg := proto.Clone(&c.header).(*tmproto.Header)
+	var msg = proto.Clone(&c.header).(*tmproto.Header)
 	return *msg
 }
 
@@ -221,12 +221,9 @@ func (c Context) IsZero() bool {
 
 // WithValue is deprecated, provided for backwards compatibility
 // Please use
-//
-//	ctx = ctx.WithContext(context.WithValue(ctx.Context(), key, false))
-//
+//     ctx = ctx.WithContext(context.WithValue(ctx.Context(), key, false))
 // instead of
-//
-//	ctx = ctx.WithValue(key, false)
+//     ctx = ctx.WithValue(key, false)
 func (c Context) WithValue(key, value interface{}) Context {
 	c.ctx = context.WithValue(c.ctx, key, value)
 	return c
@@ -234,12 +231,9 @@ func (c Context) WithValue(key, value interface{}) Context {
 
 // Value is deprecated, provided for backwards compatibility
 // Please use
-//
-//	ctx.Context().Value(key)
-//
+//     ctx.Context().Value(key)
 // instead of
-//
-//	ctx.Value(key)
+//     ctx.Value(key)
 func (c Context) Value(key interface{}) interface{} {
 	return c.ctx.Value(key)
 }

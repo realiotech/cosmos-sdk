@@ -48,6 +48,7 @@ const (
 // PLEASE DO NOT REPLICATE THIS PATTERN IN YOUR OWN APP.
 func migrateVestingAccounts(ctx sdk.Context, account types.AccountI, queryServer grpc.Server) (types.AccountI, error) {
 	bondDenom, err := getBondDenom(ctx, queryServer)
+
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +64,7 @@ func migrateVestingAccounts(ctx sdk.Context, account types.AccountI, queryServer
 		addr,
 		queryServer,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +74,7 @@ func migrateVestingAccounts(ctx sdk.Context, account types.AccountI, queryServer
 		addr,
 		queryServer,
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -82,6 +85,7 @@ func migrateVestingAccounts(ctx sdk.Context, account types.AccountI, queryServer
 		bondDenom,
 		queryServer,
 	)
+
 	if err != nil {
 		return nil, err
 	}

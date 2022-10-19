@@ -3,7 +3,7 @@ package rest
 import (
 	"encoding/base64"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -31,7 +31,7 @@ func DecodeTxRequestHandlerFn(clientCtx client.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req DecodeReq
 
-		body, err := io.ReadAll(r.Body)
+		body, err := ioutil.ReadAll(r.Body)
 		if rest.CheckBadRequestError(w, err) {
 			return
 		}

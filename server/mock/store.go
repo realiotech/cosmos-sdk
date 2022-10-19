@@ -116,12 +116,7 @@ func (ms multiStore) GetStoreType() sdk.StoreType {
 func (ms multiStore) SetInterBlockCache(_ sdk.MultiStorePersistentCache) {
 	panic("not implemented")
 }
-
 func (ms multiStore) SetIAVLCacheSize(size int) {
-	panic("not implemented")
-}
-
-func (ms multiStore) SetIAVLDisableFastNode(disable bool) {
 	panic("not implemented")
 }
 
@@ -136,10 +131,6 @@ func (ms multiStore) Snapshot(height uint64, protoWriter protoio.Writer) error {
 func (ms multiStore) Restore(
 	height uint64, format uint32, protoReader protoio.Reader,
 ) (snapshottypes.SnapshotItem, error) {
-	panic("not implemented")
-}
-
-func (ms multiStore) RollbackToVersion(version int64) error {
 	panic("not implemented")
 }
 

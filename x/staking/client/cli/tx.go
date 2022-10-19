@@ -98,7 +98,7 @@ func NewEditValidatorCmd() *cobra.Command {
 				return err
 			}
 			valAddr := clientCtx.GetFromAddress()
-			moniker, _ := cmd.Flags().GetString(FlagEditMoniker)
+			moniker, _ := cmd.Flags().GetString(FlagMoniker)
 			identity, _ := cmd.Flags().GetString(FlagIdentity)
 			website, _ := cmd.Flags().GetString(FlagWebsite)
 			security, _ := cmd.Flags().GetString(FlagSecurityContact)
@@ -497,6 +497,7 @@ func PrepareConfigForTxCreateValidator(flagSet *flag.FlagSet, moniker, nodeID, c
 func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorConfig, txBldr tx.Factory, generateOnly bool) (tx.Factory, sdk.Msg, error) {
 	amounstStr := config.Amount
 	amount, err := sdk.ParseCoinNormalized(amounstStr)
+
 	if err != nil {
 		return txBldr, nil, err
 	}
@@ -515,6 +516,7 @@ func BuildCreateValidatorMsg(clientCtx client.Context, config TxCreateValidatorC
 	maxRateStr := config.CommissionMaxRate
 	maxChangeRateStr := config.CommissionMaxChangeRate
 	commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
+
 	if err != nil {
 		return txBldr, nil, err
 	}

@@ -3,6 +3,7 @@ package rest_test
 import (
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -25,15 +26,13 @@ import (
 
 func TestBaseReq_Sanitize(t *testing.T) {
 	t.Parallel()
-	sanitized := rest.BaseReq{
-		ChainID:       "   test",
+	sanitized := rest.BaseReq{ChainID: "   test",
 		Memo:          "memo     ",
 		From:          " cosmos1cq0sxam6x4l0sv9yz3a2vlqhdhvt2k6jtgcse0 ",
 		Gas:           " ",
 		GasAdjustment: "  0.3",
 	}.Sanitize()
-	require.Equal(t, rest.BaseReq{
-		ChainID:       "test",
+	require.Equal(t, rest.BaseReq{ChainID: "test",
 		Memo:          "memo",
 		From:          "cosmos1cq0sxam6x4l0sv9yz3a2vlqhdhvt2k6jtgcse0",
 		Gas:           "",
@@ -227,7 +226,7 @@ func TestProcessPostResponse(t *testing.T) {
 
 func TestReadRESTReq(t *testing.T) {
 	t.Parallel()
-	reqBody := io.NopCloser(strings.NewReader(`{"chain_id":"alessio","memo":"text"}`))
+	reqBody := ioutil.NopCloser(strings.NewReader(`{"chain_id":"alessio","memo":"text"}`))
 	req := &http.Request{Body: reqBody}
 	w := httptest.NewRecorder()
 	var br rest.BaseReq
@@ -240,7 +239,7 @@ func TestReadRESTReq(t *testing.T) {
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
 	// test non valid JSON
-	reqBody = io.NopCloser(strings.NewReader(`MALFORMED`))
+	reqBody = ioutil.NopCloser(strings.NewReader(`MALFORMED`))
 	req = &http.Request{Body: reqBody}
 	br = rest.BaseReq{}
 	w = httptest.NewRecorder()
@@ -258,7 +257,7 @@ func TestWriteSimulationResponse(t *testing.T) {
 	res := w.Result() //nolint:bodyclose
 	t.Cleanup(func() { res.Body.Close() })
 	require.Equal(t, http.StatusOK, res.StatusCode)
-	bs, err := io.ReadAll(res.Body)
+	bs, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 	t.Cleanup(func() { res.Body.Close() })
 	require.Equal(t, `{"gas_estimate":"10"}`, string(bs))
@@ -321,7 +320,7 @@ func TestPostProcessResponseBare(t *testing.T) {
 	res := w.Result() //nolint:bodyclose
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
-	got, err := io.ReadAll(res.Body)
+	got, err := ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	t.Cleanup(func() { res.Body.Close() })
@@ -339,7 +338,7 @@ func TestPostProcessResponseBare(t *testing.T) {
 	res = w.Result() //nolint:bodyclose
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
-	got, err = io.ReadAll(res.Body)
+	got, err = ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	t.Cleanup(func() { res.Body.Close() })
@@ -357,7 +356,7 @@ func TestPostProcessResponseBare(t *testing.T) {
 	res = w.Result() //nolint:bodyclose
 	require.Equal(t, http.StatusOK, res.StatusCode)
 
-	got, err = io.ReadAll(res.Body)
+	got, err = ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	t.Cleanup(func() { res.Body.Close() })
@@ -372,7 +371,7 @@ func TestPostProcessResponseBare(t *testing.T) {
 	res = w.Result() //nolint:bodyclose
 	require.Equal(t, http.StatusInternalServerError, res.StatusCode)
 
-	got, err = io.ReadAll(res.Body)
+	got, err = ioutil.ReadAll(res.Body)
 	require.NoError(t, err)
 
 	t.Cleanup(func() { res.Body.Close() })
@@ -399,7 +398,7 @@ func runPostProcessResponse(t *testing.T, ctx client.Context, obj interface{}, e
 	resp := w.Result() //nolint:bodyclose
 	t.Cleanup(func() { resp.Body.Close() })
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	require.Nil(t, err)
 	require.Equal(t, expectedBody, body)
 
@@ -414,7 +413,7 @@ func runPostProcessResponse(t *testing.T, ctx client.Context, obj interface{}, e
 	resp = w.Result() //nolint:bodyclose
 
 	t.Cleanup(func() { resp.Body.Close() })
-	body, err = io.ReadAll(resp.Body)
+	body, err = ioutil.ReadAll(resp.Body)
 
 	require.Nil(t, err)
 	require.Equal(t, string(expectedBody), string(body))

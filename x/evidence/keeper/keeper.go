@@ -29,6 +29,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec, storeKey sdk.StoreKey, stakingKeeper types.StakingKeeper,
 	slashingKeeper types.SlashingKeeper,
 ) *Keeper {
+
 	return &Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,

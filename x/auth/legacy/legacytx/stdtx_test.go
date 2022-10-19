@@ -26,7 +26,7 @@ var (
 )
 
 func init() {
-	amino := codec.NewLegacyAmino()
+	var amino = codec.NewLegacyAmino()
 	RegisterLegacyAminoCodec(amino)
 }
 

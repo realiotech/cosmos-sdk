@@ -20,8 +20,10 @@ const (
 	QuerierRoute = ModuleName
 )
 
-// FeeAllowanceKeyPrefix is the set of the kvstore for fee allowance data
-var FeeAllowanceKeyPrefix = []byte{0x00}
+var (
+	// FeeAllowanceKeyPrefix is the set of the kvstore for fee allowance data
+	FeeAllowanceKeyPrefix = []byte{0x00}
+)
 
 // FeeAllowanceKey is the canonical key to store a grant from granter to grantee
 // We store by grantee first to allow searching by everyone who granted to you

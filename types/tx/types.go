@@ -13,10 +13,8 @@ import (
 const MaxGasWanted = uint64((1 << 63) - 1)
 
 // Interface implementation checks.
-var (
-	_, _, _, _ codectypes.UnpackInterfacesMessage = &Tx{}, &TxBody{}, &AuthInfo{}, &SignerInfo{}
-	_          sdk.Tx                             = &Tx{}
-)
+var _, _, _, _ codectypes.UnpackInterfacesMessage = &Tx{}, &TxBody{}, &AuthInfo{}, &SignerInfo{}
+var _ sdk.Tx = &Tx{}
 
 // GetMsgs implements the GetMsgs method on sdk.Tx.
 func (t *Tx) GetMsgs() []sdk.Msg {
@@ -120,7 +118,10 @@ func (t *Tx) GetSigners() []sdk.AccAddress {
 	// ensure any specified fee payer is included in the required signers (at the end)
 	feePayer := t.AuthInfo.Fee.Payer
 	if feePayer != "" && !seen[feePayer] {
-		payerAddr := sdk.MustAccAddressFromBech32(feePayer)
+		payerAddr, err := sdk.AccAddressFromBech32(feePayer)
+		if err != nil {
+			panic(err)
+		}
 		signers = append(signers, payerAddr)
 		seen[feePayer] = true
 	}
@@ -131,15 +132,17 @@ func (t *Tx) GetSigners() []sdk.AccAddress {
 func (t *Tx) GetGas() uint64 {
 	return t.AuthInfo.Fee.GasLimit
 }
-
 func (t *Tx) GetFee() sdk.Coins {
 	return t.AuthInfo.Fee.Amount
 }
-
 func (t *Tx) FeePayer() sdk.AccAddress {
 	feePayer := t.AuthInfo.Fee.Payer
 	if feePayer != "" {
-		return sdk.MustAccAddressFromBech32(feePayer)
+		payerAddr, err := sdk.AccAddressFromBech32(feePayer)
+		if err != nil {
+			panic(err)
+		}
+		return payerAddr
 	}
 	// use first signer as default if no payer specified
 	return t.GetSigners()[0]
@@ -148,7 +151,11 @@ func (t *Tx) FeePayer() sdk.AccAddress {
 func (t *Tx) FeeGranter() sdk.AccAddress {
 	feePayer := t.AuthInfo.Fee.Granter
 	if feePayer != "" {
-		return sdk.MustAccAddressFromBech32(feePayer)
+		granterAddr, err := sdk.AccAddressFromBech32(feePayer)
+		if err != nil {
+			panic(err)
+		}
+		return granterAddr
 	}
 	return nil
 }

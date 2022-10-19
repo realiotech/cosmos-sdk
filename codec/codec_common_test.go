@@ -104,8 +104,7 @@ func testMarshaling(t *testing.T, cdc codec.Codec) {
 			&testdata.Cat{},
 			false,
 			true,
-		},
-	}
+		}}
 	if _, ok := cdc.(*codec.AminoCodec); ok {
 		testCases = append(testCases, testCase{
 			"any marshaling",
@@ -124,8 +123,7 @@ func testMarshaling(t *testing.T, cdc codec.Codec) {
 			func(i codec.ProtoMarshaler) ([]byte, error) { return cdc.MarshalJSON(i) },
 			func(i codec.ProtoMarshaler) []byte { return cdc.MustMarshalJSON(i) },
 			func(bz []byte, ptr codec.ProtoMarshaler) error { return cdc.UnmarshalJSON(bz, ptr) },
-			func(bz []byte, ptr codec.ProtoMarshaler) { cdc.MustUnmarshalJSON(bz, ptr) },
-		}
+			func(bz []byte, ptr codec.ProtoMarshaler) { cdc.MustUnmarshalJSON(bz, ptr) }}
 
 		t.Run(tc.name+"_BinaryBare",
 			func(t *testing.T) { testMarshalingTestCase(require.New(t), tc, m1) })

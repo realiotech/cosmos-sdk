@@ -144,6 +144,7 @@ func (suite *KeeperTestSuite) TestKeeperCrud() {
 
 	_, err = suite.msgSrvr.RevokeAllowance(suite.ctx, &feegrant.MsgRevokeAllowance{Granter: suite.addrs[3].String(), Grantee: accAddr.String()})
 	suite.Require().NoError(err)
+
 }
 
 func (suite *KeeperTestSuite) TestUseGrantedFee() {
@@ -231,6 +232,7 @@ func (suite *KeeperTestSuite) TestUseGrantedFee() {
 	_, err = suite.keeper.GetAllowance(ctx, suite.addrs[0], suite.addrs[2])
 	suite.Error(err)
 	suite.Contains(err.Error(), "fee-grant not found")
+
 }
 
 func (suite *KeeperTestSuite) TestIterateGrants() {
@@ -255,4 +257,5 @@ func (suite *KeeperTestSuite) TestIterateGrants() {
 		suite.Require().Contains([]string{suite.addrs[0].String(), suite.addrs[2].String()}, grant.Granter)
 		return true
 	})
+
 }
