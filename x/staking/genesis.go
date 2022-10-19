@@ -82,7 +82,7 @@ func InitGenesis(
 
 		for _, entry := range ubd.Entries {
 			keeper.InsertUBDQueue(ctx, ubd, entry.CompletionTime)
-			notBondedTokens = notBondedTokens.Add(entry.Balance)
+			notBondedTokens = notBondedTokens.Add(entry.Balance.Amount)
 		}
 	}
 
@@ -94,9 +94,6 @@ func InitGenesis(
 		}
 	}
 
-	bondedCoins := sdk.NewCoins(sdk.NewCoin(data.Params.BondDenom, bondedTokens))
-	notBondedCoins := sdk.NewCoins(sdk.NewCoin(data.Params.BondDenom, notBondedTokens))
-
 	// check if the unbonded and bonded pools accounts exists
 	bondedPool := keeper.GetBondedPool(ctx)
 	if bondedPool == nil {
@@ -107,9 +104,16 @@ func InitGenesis(
 	if bondedBalance.IsZero() {
 		accountKeeper.SetModuleAccount(ctx, bondedPool)
 	}
+
+	bondedBalanceSum := sdk.ZeroInt()
+	for _, c := range bondedBalance {
+		bondedBalanceSum = bondedBalanceSum.Add(c.Amount)
+	}
+
 	// if balance is different from bonded coins panic because genesis is most likely malformed
-	if !bondedBalance.IsEqual(bondedCoins) {
-		panic(fmt.Sprintf("bonded pool balance is different from bonded coins: %s <-> %s", bondedBalance, bondedCoins))
+	// todo realio fork, test this logic
+	if !bondedBalanceSum.Equal(bondedTokens) {
+		panic(fmt.Sprintf("bonded pool balance is different from bonded coins: %s <-> %s", bondedBalanceSum, bondedTokens))
 	}
 	notBondedPool := keeper.GetNotBondedPool(ctx)
 	if notBondedPool == nil {
@@ -120,9 +124,14 @@ func InitGenesis(
 	if notBondedBalance.IsZero() {
 		accountKeeper.SetModuleAccount(ctx, notBondedPool)
 	}
+
+	unBondedBalanceSum := sdk.ZeroInt()
+	for _, c := range notBondedBalance {
+		unBondedBalanceSum = unBondedBalanceSum.Add(c.Amount)
+	}
 	// if balance is different from non bonded coins panic because genesis is most likely malformed
-	if !notBondedBalance.IsEqual(notBondedCoins) {
-		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", notBondedBalance, notBondedCoins))
+	if !unBondedBalanceSum.Equal(notBondedTokens) {
+		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", unBondedBalanceSum, notBondedTokens))
 	}
 	// don't need to run Tendermint updates if we exported
 	if data.Exported {

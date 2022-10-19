@@ -128,13 +128,14 @@ func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeigh
 	// Burn the slashed tokens from the pool account and decrease the total supply.
 	validator = k.RemoveValidatorTokens(ctx, validator, tokensToBurn)
 
+	coinToBurn := sdk.NewCoin(validator.BondDenom, tokensToBurn)
 	switch validator.GetStatus() {
 	case types.Bonded:
-		if err := k.burnBondedTokens(ctx, tokensToBurn); err != nil {
+		if err := k.burnBondedTokens(ctx, coinToBurn); err != nil {
 			panic(err)
 		}
 	case types.Unbonding, types.Unbonded:
-		if err := k.burnNotBondedTokens(ctx, tokensToBurn); err != nil {
+		if err := k.burnNotBondedTokens(ctx, coinToBurn); err != nil {
 			panic(err)
 		}
 	default:
@@ -145,7 +146,7 @@ func (k Keeper) Slash(ctx sdk.Context, consAddr sdk.ConsAddress, infractionHeigh
 		"validator slashed by slash factor",
 		"validator", validator.GetOperator().String(),
 		"slash_factor", slashFactor.String(),
-		"burned", tokensToBurn,
+		"burned", coinToBurn.String(),
 	)
 }
 
@@ -176,9 +177,13 @@ func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation ty
 	now := ctx.BlockHeader().Time
 	totalSlashAmount = sdk.ZeroInt()
 	burnedAmount := sdk.ZeroInt()
+	var burnDenom string
 
 	// perform slashing on all entries within the unbonding delegation
 	for i, entry := range unbondingDelegation.Entries {
+		// Capture the denom so we can create the coin later for burning
+		burnDenom = entry.InitialBalance.Denom
+
 		// If unbonding started before this height, stake didn't contribute to infraction
 		if entry.CreationHeight < infractionHeight {
 			continue
@@ -190,7 +195,7 @@ func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation ty
 		}
 
 		// Calculate slash amount proportional to stake contributing to infraction
-		slashAmountDec := slashFactor.MulInt(entry.InitialBalance)
+		slashAmountDec := slashFactor.MulInt(entry.InitialBalance.Amount)
 		slashAmount := slashAmountDec.TruncateInt()
 		totalSlashAmount = totalSlashAmount.Add(slashAmount)
 
@@ -198,7 +203,7 @@ func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation ty
 		// Possible since the unbonding delegation may already
 		// have been slashed, and slash amounts are calculated
 		// according to stake held at time of infraction
-		unbondingSlashAmount := sdk.MinInt(slashAmount, entry.Balance)
+		unbondingSlashAmount := sdk.MinInt(slashAmount, entry.Balance.Amount)
 
 		// Update unbonding delegation if necessary
 		if unbondingSlashAmount.IsZero() {
@@ -206,12 +211,13 @@ func (k Keeper) SlashUnbondingDelegation(ctx sdk.Context, unbondingDelegation ty
 		}
 
 		burnedAmount = burnedAmount.Add(unbondingSlashAmount)
-		entry.Balance = entry.Balance.Sub(unbondingSlashAmount)
+		entry.Balance = entry.Balance.SubAmount(unbondingSlashAmount)
 		unbondingDelegation.Entries[i] = entry
 		k.SetUnbondingDelegation(ctx, unbondingDelegation)
 	}
 
-	if err := k.burnNotBondedTokens(ctx, burnedAmount); err != nil {
+	burnCoin := sdk.NewCoin(burnDenom, burnedAmount)
+	if err := k.burnNotBondedTokens(ctx, burnCoin); err != nil {
 		panic(err)
 	}
 
@@ -230,9 +236,13 @@ func (k Keeper) SlashRedelegation(ctx sdk.Context, srcValidator types.Validator,
 	now := ctx.BlockHeader().Time
 	totalSlashAmount = sdk.ZeroInt()
 	bondedBurnedAmount, notBondedBurnedAmount := sdk.ZeroInt(), sdk.ZeroInt()
+	var burnDenom string
 
 	// perform slashing on all entries within the redelegation
 	for _, entry := range redelegation.Entries {
+		// Capture the denom so we can create the coin later for burning
+		burnDenom = entry.InitialBalance.Denom
+
 		// If redelegation started before this height, stake didn't contribute to infraction
 		if entry.CreationHeight < infractionHeight {
 			continue
@@ -244,7 +254,7 @@ func (k Keeper) SlashRedelegation(ctx sdk.Context, srcValidator types.Validator,
 		}
 
 		// Calculate slash amount proportional to stake contributing to infraction
-		slashAmountDec := slashFactor.MulInt(entry.InitialBalance)
+		slashAmountDec := slashFactor.MulInt(entry.InitialBalance.Amount)
 		slashAmount := slashAmountDec.TruncateInt()
 		totalSlashAmount = totalSlashAmount.Add(slashAmount)
 
@@ -293,11 +303,13 @@ func (k Keeper) SlashRedelegation(ctx sdk.Context, srcValidator types.Validator,
 		}
 	}
 
-	if err := k.burnBondedTokens(ctx, bondedBurnedAmount); err != nil {
+	burnBondedCoin := sdk.NewCoin(burnDenom, bondedBurnedAmount)
+	if err := k.burnBondedTokens(ctx, burnBondedCoin); err != nil {
 		panic(err)
 	}
 
-	if err := k.burnNotBondedTokens(ctx, notBondedBurnedAmount); err != nil {
+	burnNotBondedCoin := sdk.NewCoin(burnDenom, notBondedBurnedAmount)
+	if err := k.burnNotBondedTokens(ctx, burnNotBondedCoin); err != nil {
 		panic(err)
 	}
 

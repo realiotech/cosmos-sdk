@@ -58,6 +58,7 @@ func NewValidator(operator sdk.ValAddress, pubKey cryptotypes.PubKey, descriptio
 		UnbondingTime:     time.Unix(0, 0).UTC(),
 		Commission:        NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation: sdk.OneInt(),
+		BondDenom:         sdk.DefaultBondDenom,
 	}, nil
 }
 
@@ -346,7 +347,7 @@ func (v Validator) BondedTokens() sdk.Int {
 	return sdk.ZeroInt()
 }
 
-// ConsensusPower gets the consensus-engine power. Aa reduction of 10^6 from
+// ConsensusPower gets the consensus-engine power. Aa reduction of 10^18 from
 // validator tokens is applied
 func (v Validator) ConsensusPower(r sdk.Int) int64 {
 	if v.IsBonded() {
