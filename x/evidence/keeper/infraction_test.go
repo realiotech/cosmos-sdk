@@ -13,7 +13,7 @@ func (suite *KeeperTestSuite) TestHandleDoubleSign() {
 	ctx := suite.ctx.WithIsCheckTx(false).WithBlockHeight(1)
 	suite.populateValidators(ctx)
 
-	power := int64(100)
+	power := int64(1)
 	stakingParams := suite.app.StakingKeeper.GetParams(ctx)
 	operatorAddr, val := valAddresses[0], pubkeys[0]
 	tstaking := teststaking.NewHelper(suite.T(), ctx, suite.app.StakingKeeper)

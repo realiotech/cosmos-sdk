@@ -43,7 +43,8 @@ func TestWithdrawValidatorCommission(t *testing.T) {
 		sdk.NewDecCoinFromDec("stake", sdk.NewDec(3).Quo(sdk.NewDec(2))),
 	}
 
-	addr := simapp.AddTestAddrs(app, ctx, 1, sdk.NewInt(1000000000))
+	amount, _ := sdk.NewIntFromString("100000000000000000000")
+	addr := simapp.AddTestAddrs(app, ctx, 1, amount)
 	valAddrs := simapp.ConvertAddrsToValAddrs(addr)
 
 	// set module account coins
@@ -55,7 +56,7 @@ func TestWithdrawValidatorCommission(t *testing.T) {
 
 	// check initial balance
 	balance := app.BankKeeper.GetAllBalances(ctx, sdk.AccAddress(valAddrs[0]))
-	expTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 1000)
+	expTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 100)
 	expCoins := sdk.NewCoins(sdk.NewCoin("stake", expTokens))
 	require.Equal(t, expCoins, balance)
 

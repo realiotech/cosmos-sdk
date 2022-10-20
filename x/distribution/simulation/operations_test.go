@@ -197,7 +197,7 @@ func (suite *SimTestSuite) TestSimulateMsgFundCommunityPool() {
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	suite.Require().True(operationMsg.OK)
-	suite.Require().Equal("4896096stake", msg.Amount.String())
+	suite.Require().Equal("98100858108421259236stake", msg.Amount.String())
 	suite.Require().Equal("cosmos1ghekyjucln7y67ntx7cf27m9dpuxxemn4c8g4r", msg.Depositor)
 	suite.Require().Equal(types.TypeMsgFundCommunityPool, msg.Type())
 	suite.Require().Equal(types.ModuleName, msg.Route())

@@ -16,7 +16,8 @@ import (
 var TestProposal = types.NewTextProposal("Test", "description")
 
 func createValidators(t *testing.T, ctx sdk.Context, app *simapp.SimApp, powers []int64) ([]sdk.AccAddress, []sdk.ValAddress) {
-	addrs := simapp.AddTestAddrsIncremental(app, ctx, 5, sdk.NewInt(30000000))
+	amount, _ := sdk.NewIntFromString("30000000000000000000")
+	addrs := simapp.AddTestAddrsIncremental(app, ctx, 5, amount)
 	valAddrs := simapp.ConvertAddrsToValAddrs(addrs)
 	pks := simapp.CreateTestPubKeys(5)
 	cdc := simapp.MakeTestEncodingConfig().Marshaler

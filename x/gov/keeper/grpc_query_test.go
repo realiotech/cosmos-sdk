@@ -775,9 +775,10 @@ func (suite *KeeperTestSuite) TestGRPCQueryTally() {
 
 				req = &types.QueryTallyResultRequest{ProposalId: proposal.ProposalId}
 
+				yesAmt, _ := sdk.NewIntFromString("15000000000000000000")
 				expRes = &types.QueryTallyResultResponse{
 					Tally: types.TallyResult{
-						Yes: sdk.NewInt(3 * 5 * 1000000),
+						Yes: yesAmt,
 					},
 				}
 			},

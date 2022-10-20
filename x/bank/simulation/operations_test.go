@@ -82,7 +82,7 @@ func (suite *SimTestSuite) TestSimulateMsgSend() {
 	types.ModuleCdc.UnmarshalJSON(operationMsg.Msg, &msg)
 
 	suite.Require().True(operationMsg.OK)
-	suite.Require().Equal("65337742stake", msg.Amount.String())
+	suite.Require().Equal("107242728498552699278stake", msg.Amount.String())
 	suite.Require().Equal("cosmos1ghekyjucln7y67ntx7cf27m9dpuxxemn4c8g4r", msg.FromAddress)
 	suite.Require().Equal("cosmos1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7u4x9a0", msg.ToAddress)
 	suite.Require().Equal(types.TypeMsgSend, msg.Type())
@@ -113,7 +113,7 @@ func (suite *SimTestSuite) TestSimulateMsgMultiSend() {
 	require.True(operationMsg.OK)
 	require.Len(msg.Inputs, 3)
 	require.Equal("cosmos1p8wcgrjr4pjju90xg6u9cgq55dxwq8j7u4x9a0", msg.Inputs[1].Address)
-	require.Equal("185121068stake", msg.Inputs[1].Coins.String())
+	require.Equal("111202564177997141612stake", msg.Inputs[1].Coins.String())
 	require.Len(msg.Outputs, 2)
 	require.Equal("cosmos1ghekyjucln7y67ntx7cf27m9dpuxxemn4c8g4r", msg.Outputs[1].Address)
 	require.Equal("260469617stake", msg.Outputs[1].Coins.String())
