@@ -32,7 +32,7 @@ func bootstrapValidatorTest(t testing.TB, power int64, numAddrs int) (*simapp.Si
 	addrDels, addrVals := generateAddresses(app, ctx, numAddrs)
 
 	amt := app.StakingKeeper.TokensFromConsensusPower(ctx, power)
-	totalSupply := sdk.NewCoins(sdk.NewCoin(app.StakingKeeper.BondDenom(ctx), amt.MulRaw(int64(len(addrDels)))))
+	totalSupply := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amt.MulRaw(int64(len(addrDels)))))
 
 	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
 	// set bonded pool supply
@@ -45,7 +45,8 @@ func bootstrapValidatorTest(t testing.TB, power int64, numAddrs int) (*simapp.Si
 	require.Len(t, delegations, 1)
 	delegation := delegations[0]
 
-	_, err := app.StakingKeeper.Undelegate(ctx, delegation.GetDelegatorAddr(), delegation.GetValidatorAddr(), delegation.Shares)
+	_, err := app.StakingKeeper.Undelegate(ctx, delegation.GetDelegatorAddr(), delegation.GetValidatorAddr(),
+		delegation.Shares, sdk.NewCoin(sdk.DefaultBondDenom, totalSupply.AmountOfNoDenomValidation(sdk.DefaultBondDenom)))
 	require.NoError(t, err)
 
 	// end block to unbond genesis validator

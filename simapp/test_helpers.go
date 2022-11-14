@@ -134,9 +134,10 @@ func Setup(t *testing.T, isCheckTx bool) *SimApp {
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	amount, _ := sdk.NewIntFromString("100000000000000000000000000")
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, amount)),
 	}
 
 	app := SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
@@ -175,6 +176,7 @@ func genesisStateWithValSet(t *testing.T,
 			UnbondingTime:     time.Unix(0, 0).UTC(),
 			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			MinSelfDelegation: sdk.ZeroInt(),
+			BondDenom:         sdk.DefaultBondDenom,
 		}
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
