@@ -435,7 +435,7 @@ func SimulateMsgCancelUnbondingDelegate(ak types.AccountKeeper, bk types.BankKee
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCancelUnbondingDelegation, "delegator receiving balance is negative"), nil, nil
 		}
 
-		cancelBondAmt := simtypes.RandomAmount(r, unbondingDelegationEntry.Balance)
+		cancelBondAmt := simtypes.RandomAmount(r, unbondingDelegationEntry.Balance.Amount)
 
 		if cancelBondAmt.IsZero() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgCancelUnbondingDelegation, "cancelBondAmt amount is zero"), nil, nil

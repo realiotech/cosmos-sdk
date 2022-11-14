@@ -48,6 +48,7 @@ func TestInitGenesis(t *testing.T) {
 		Tokens:          valTokens,
 		DelegatorShares: sdk.NewDecFromInt(valTokens),
 		Description:     types.NewDescription("hoop", "", "", "", ""),
+		BondDenom:       sdk.DefaultBondDenom,
 	}
 	bondedVal2 := types.Validator{
 		OperatorAddress: sdk.ValAddress(addrs[1]).String(),
@@ -56,6 +57,7 @@ func TestInitGenesis(t *testing.T) {
 		Tokens:          valTokens,
 		DelegatorShares: sdk.NewDecFromInt(valTokens),
 		Description:     types.NewDescription("bloop", "", "", "", ""),
+		BondDenom:       sdk.DefaultBondDenom,
 	}
 
 	// append new bonded validators to the list
@@ -126,6 +128,7 @@ func TestInitGenesis_PoolsBalanceMismatch(t *testing.T) {
 		Tokens:          sdk.NewInt(10),
 		DelegatorShares: sdk.NewDecFromInt(sdk.NewInt(10)),
 		Description:     types.NewDescription("bloop", "", "", "", ""),
+		BondDenom:       sdk.DefaultBondDenom,
 	}
 
 	params := types.Params{
@@ -180,6 +183,7 @@ func TestInitGenesisLargeValidatorSet(t *testing.T) {
 		)
 		require.NoError(t, err)
 		validators[i].Status = types.Bonded
+		validators[i].BondDenom = sdk.DefaultBondDenom
 
 		tokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 1)
 		if i < 100 {

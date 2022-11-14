@@ -59,6 +59,7 @@ func NewValidator(operator sdk.ValAddress, pubKey cryptotypes.PubKey, descriptio
 		UnbondingTime:     time.Unix(0, 0).UTC(),
 		Commission:        NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		MinSelfDelegation: sdk.OneInt(),
+		BondDenom:         sdk.DefaultBondDenom,
 	}, nil
 }
 
@@ -454,7 +455,9 @@ func (v *Validator) MinEqual(other *Validator) bool {
 		v.Commission.Equal(other.Commission) &&
 		v.Jailed == other.Jailed &&
 		v.MinSelfDelegation.Equal(other.MinSelfDelegation) &&
-		v.ConsensusPubkey.Equal(other.ConsensusPubkey)
+		v.ConsensusPubkey.Equal(other.ConsensusPubkey) &&
+		v.BondDenom == other.BondDenom
+
 }
 
 // Equal checks if the receiver equals the parameter
@@ -467,6 +470,7 @@ func (v *Validator) Equal(v2 *Validator) bool {
 func (v Validator) IsJailed() bool        { return v.Jailed }
 func (v Validator) GetMoniker() string    { return v.Description.Moniker }
 func (v Validator) GetStatus() BondStatus { return v.Status }
+func (v Validator) GetBondDenom() string  { return v.BondDenom }
 func (v Validator) GetOperator() sdk.ValAddress {
 	if v.OperatorAddress == "" {
 		return nil

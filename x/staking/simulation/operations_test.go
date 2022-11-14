@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/simapp"
@@ -122,7 +123,7 @@ func TestSimulateMsgCancelUnbondingDelegation(t *testing.T) {
 	setupValidatorRewards(app, ctx, validator0.GetOperator())
 
 	// unbonding delegation
-	udb := types.NewUnbondingDelegation(delegator.Address, validator0.GetOperator(), app.LastBlockHeight(), blockTime.Add(2*time.Minute), delTokens)
+	udb := types.NewUnbondingDelegation(delegator.Address, validator0.GetOperator(), app.LastBlockHeight(), blockTime.Add(2*time.Minute), sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 	app.StakingKeeper.SetUnbondingDelegation(ctx, udb)
 	setupValidatorRewards(app, ctx, validator0.GetOperator())
 
