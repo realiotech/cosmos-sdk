@@ -84,7 +84,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 
 		for _, entry := range ubd.Entries {
 			k.InsertUBDQueue(ctx, ubd, entry.CompletionTime)
-			notBondedTokens = notBondedTokens.Add(entry.Balance)
+			notBondedTokens = notBondedTokens.Add(entry.Balance.Amount)
 		}
 	}
 
@@ -95,9 +95,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 			k.InsertRedelegationQueue(ctx, red, entry.CompletionTime)
 		}
 	}
-
-	bondedCoins := sdk.NewCoins(sdk.NewCoin(data.Params.BondDenom, bondedTokens))
-	notBondedCoins := sdk.NewCoins(sdk.NewCoin(data.Params.BondDenom, notBondedTokens))
 
 	// check if the unbonded and bonded pools accounts exists
 	bondedPool := k.GetBondedPool(ctx)
@@ -111,9 +108,14 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		k.authKeeper.SetModuleAccount(ctx, bondedPool)
 	}
 
+	bondedBalanceSum := sdk.ZeroInt()
+	for _, c := range bondedBalance {
+		bondedBalanceSum = bondedBalanceSum.Add(c.Amount)
+	}
+
 	// if balance is different from bonded coins panic because genesis is most likely malformed
-	if !bondedBalance.IsEqual(bondedCoins) {
-		panic(fmt.Sprintf("bonded pool balance is different from bonded coins: %s <-> %s", bondedBalance, bondedCoins))
+	if !bondedBalanceSum.Equal(bondedTokens) {
+		panic(fmt.Sprintf("bonded pool balance is different from bonded coins: %s <-> %s", bondedBalanceSum, bondedTokens))
 	}
 
 	notBondedPool := k.GetNotBondedPool(ctx)
@@ -126,10 +128,13 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		k.authKeeper.SetModuleAccount(ctx, notBondedPool)
 	}
 
-	// If balance is different from non bonded coins panic because genesis is most
-	// likely malformed.
-	if !notBondedBalance.IsEqual(notBondedCoins) {
-		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", notBondedBalance, notBondedCoins))
+	unBondedBalanceSum := sdk.ZeroInt()
+	for _, c := range notBondedBalance {
+		unBondedBalanceSum = unBondedBalanceSum.Add(c.Amount)
+	}
+	// if balance is different from non bonded coins panic because genesis is most likely malformed
+	if !unBondedBalanceSum.Equal(notBondedTokens) {
+		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", unBondedBalanceSum, notBondedTokens))
 	}
 
 	// don't need to run Tendermint updates if we exported

@@ -112,6 +112,11 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 	totalPower := sdk.ZeroInt()
 	amtFromBondedToNotBonded, amtFromNotBondedToBonded := sdk.ZeroInt(), sdk.ZeroInt()
 
+	// set up Coins set. We need to sum up all bondable coins downstream
+	// to move them appropriately
+	coinsNotBondedToBonded := sdk.NewCoins()
+	coinsBondedToNotBonded := sdk.NewCoins()
+
 	// Retrieve the last validator set.
 	// The persistent set is updated later in this function.
 	// (see LastValidatorPowerKey).
@@ -148,12 +153,14 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 				return
 			}
 			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
+			coinsNotBondedToBonded = coinsNotBondedToBonded.Add(sdk.NewCoin(validator.BondDenom, validator.GetTokens()))
 		case validator.IsUnbonding():
 			validator, err = k.unbondingToBonded(ctx, validator)
 			if err != nil {
 				return
 			}
 			amtFromNotBondedToBonded = amtFromNotBondedToBonded.Add(validator.GetTokens())
+			coinsNotBondedToBonded = coinsNotBondedToBonded.Add(sdk.NewCoin(validator.BondDenom, validator.GetTokens()))
 		case validator.IsBonded():
 			// no state change
 		default:
@@ -194,6 +201,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 			return
 		}
 		amtFromBondedToNotBonded = amtFromBondedToNotBonded.Add(validator.GetTokens())
+		coinsBondedToNotBonded = coinsBondedToNotBonded.Add(sdk.NewCoin(validator.BondDenom, validator.GetTokens()))
 		k.DeleteLastValidatorPower(ctx, validator.GetOperator())
 		updates = append(updates, validator.ABCIValidatorUpdateZero())
 	}
@@ -207,9 +215,9 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []ab
 	// Compare and subtract the respective amounts to only perform one transfer.
 	// This is done in order to avoid doing multiple updates inside each iterator/loop.
 	case amtFromNotBondedToBonded.GT(amtFromBondedToNotBonded):
-		k.notBondedTokensToBonded(ctx, amtFromNotBondedToBonded.Sub(amtFromBondedToNotBonded))
+		k.notBondedTokensToBonded(ctx, coinsNotBondedToBonded.Sub(coinsBondedToNotBonded...))
 	case amtFromNotBondedToBonded.LT(amtFromBondedToNotBonded):
-		k.bondedTokensToNotBonded(ctx, amtFromBondedToNotBonded.Sub(amtFromNotBondedToBonded))
+		k.bondedTokensToNotBonded(ctx, coinsBondedToNotBonded.Sub(coinsNotBondedToBonded...))
 	default: // equal amounts of tokens; no update required
 	}
 

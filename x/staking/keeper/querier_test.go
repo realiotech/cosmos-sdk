@@ -224,7 +224,7 @@ func TestQueryDelegation(t *testing.T) {
 	app.StakingKeeper.SetValidatorByPowerIndex(ctx, val2)
 
 	delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-	_, err := app.StakingKeeper.Delegate(ctx, addrAcc2, delTokens, types.Unbonded, val1, true)
+	_, err := app.StakingKeeper.Delegate(ctx, addrAcc2, sdk.NewCoin(sdk.DefaultBondDenom, delTokens), types.Unbonded, val1, true)
 	require.NoError(t, err)
 
 	// apply TM updates
@@ -351,7 +351,7 @@ func TestQueryDelegation(t *testing.T) {
 
 	// Query unbonding delegation
 	unbondingTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	_, err = app.StakingKeeper.Undelegate(ctx, addrAcc2, val1.GetOperator(), sdk.NewDecFromInt(unbondingTokens))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrAcc2, val1.GetOperator(), sdk.NewDecFromInt(unbondingTokens), sdk.NewCoin(sdk.DefaultBondDenom, unbondingTokens))
 	require.NoError(t, err)
 
 	queryBondParams = types.QueryDelegatorValidatorRequest{DelegatorAddr: addrAcc2.String(), ValidatorAddr: addrVal1.String()}
@@ -404,7 +404,7 @@ func TestQueryDelegation(t *testing.T) {
 
 	// Query redelegation
 	redelegationTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
-	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrAcc2, val1.GetOperator(), val2.GetOperator(), sdk.NewDecFromInt(redelegationTokens))
+	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrAcc2, val1.GetOperator(), val2.GetOperator(), sdk.NewDecFromInt(redelegationTokens), sdk.NewCoin(sdk.DefaultBondDenom, redelegationTokens))
 	require.NoError(t, err)
 	redel, found := app.StakingKeeper.GetRedelegation(ctx, addrAcc2, val1.GetOperator(), val2.GetOperator())
 	require.True(t, found)
@@ -474,7 +474,7 @@ func TestQueryValidatorDelegations_Pagination(t *testing.T) {
 		}
 
 		delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-		_, err := app.StakingKeeper.Delegate(ctx, addr, delTokens, types.Unbonded, validator, true)
+		_, err := app.StakingKeeper.Delegate(ctx, addr, sdk.NewCoin(sdk.DefaultBondDenom, delTokens), types.Unbonded, validator, true)
 		require.NoError(t, err)
 	}
 
@@ -508,7 +508,7 @@ func TestQueryValidatorDelegations_Pagination(t *testing.T) {
 	// Undelegate
 	for _, addr := range addrs {
 		delTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-		_, err := app.StakingKeeper.Undelegate(ctx, addr, val1.GetOperator(), sdk.NewDecFromInt(delTokens))
+		_, err := app.StakingKeeper.Undelegate(ctx, addr, val1.GetOperator(), sdk.NewDecFromInt(delTokens), sdk.NewCoin(sdk.DefaultBondDenom, delTokens))
 		require.NoError(t, err)
 	}
 
@@ -553,12 +553,12 @@ func TestQueryRedelegations(t *testing.T) {
 	app.StakingKeeper.SetValidator(ctx, val2)
 
 	delAmount := app.StakingKeeper.TokensFromConsensusPower(ctx, 100)
-	_, err := app.StakingKeeper.Delegate(ctx, addrAcc2, delAmount, types.Unbonded, val1, true)
+	_, err := app.StakingKeeper.Delegate(ctx, addrAcc2, sdk.NewCoin(sdk.DefaultBondDenom, delAmount), types.Unbonded, val1, true)
 	require.NoError(t, err)
 	applyValidatorSetUpdates(t, ctx, app.StakingKeeper, -1)
 
 	rdAmount := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrAcc2, val1.GetOperator(), val2.GetOperator(), sdk.NewDecFromInt(rdAmount))
+	_, err = app.StakingKeeper.BeginRedelegation(ctx, addrAcc2, val1.GetOperator(), val2.GetOperator(), sdk.NewDecFromInt(rdAmount), sdk.NewCoin(sdk.DefaultBondDenom, rdAmount))
 	require.NoError(t, err)
 	applyValidatorSetUpdates(t, ctx, app.StakingKeeper, -1)
 
@@ -624,13 +624,13 @@ func TestQueryUnbondingDelegation(t *testing.T) {
 
 	// delegate
 	delAmount := app.StakingKeeper.TokensFromConsensusPower(ctx, 100)
-	_, err := app.StakingKeeper.Delegate(ctx, addrAcc1, delAmount, types.Unbonded, val1, true)
+	_, err := app.StakingKeeper.Delegate(ctx, addrAcc1, sdk.NewCoin(sdk.DefaultBondDenom, delAmount), types.Unbonded, val1, true)
 	require.NoError(t, err)
 	applyValidatorSetUpdates(t, ctx, app.StakingKeeper, -1)
 
 	// undelegate
 	undelAmount := app.StakingKeeper.TokensFromConsensusPower(ctx, 20)
-	_, err = app.StakingKeeper.Undelegate(ctx, addrAcc1, val1.GetOperator(), sdk.NewDecFromInt(undelAmount))
+	_, err = app.StakingKeeper.Undelegate(ctx, addrAcc1, val1.GetOperator(), sdk.NewDecFromInt(undelAmount), sdk.NewCoin(sdk.DefaultBondDenom, undelAmount))
 	require.NoError(t, err)
 	applyValidatorSetUpdates(t, ctx, app.StakingKeeper, -1)
 

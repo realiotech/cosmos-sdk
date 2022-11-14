@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -46,6 +47,10 @@ var (
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
+
+// ReBondDemon regex, Bond denominations can be N letters long and support lowercase letters,
+//followed by a comma and more letters.
+var ReBondDemon = regexp.MustCompile(`(^[a-z]+([,][a-z]+)?)+$`)
 
 // ParamTable for staking module
 func ParamKeyTable() paramtypes.KeyTable {
@@ -197,10 +202,17 @@ func validateBondDenom(i interface{}) error {
 		return errors.New("bond denom cannot be blank")
 	}
 
-	if err := sdk.ValidateDenom(v); err != nil {
+	if err := ValidateBondDenom(v); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func ValidateBondDenom(denom string) error {
+	if !ReBondDemon.MatchString(denom) {
+		return fmt.Errorf("invalid denom: %s", denom)
+	}
 	return nil
 }
 

@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"strings"
 	"time"
 
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -36,8 +38,31 @@ func (k Keeper) HistoricalEntries(ctx sdk.Context) (res uint32) {
 
 // BondDenom - Bondable coin denomination
 func (k Keeper) BondDenom(ctx sdk.Context) (res string) {
-	k.paramstore.Get(ctx, types.KeyBondDenom, &res)
-	return
+	// todo make this a param or constant
+	return "ario"
+}
+
+func (k Keeper) BondDenomSlice(ctx sdk.Context) (res []string) {
+	var supportedDenom string
+	k.paramstore.Get(ctx, types.KeyBondDenom, &supportedDenom)
+	res = strings.Split(supportedDenom, ",")
+
+	return res
+}
+
+func (k Keeper) IsBondDenomSupported(ctx sdk.Context, denom string) bool {
+	var supportedDenom string
+	k.paramstore.Get(ctx, types.KeyBondDenom, &supportedDenom)
+	s := strings.Split(supportedDenom, ",")
+
+	var result = false
+	for _, x := range s {
+		if x == denom {
+			result = true
+			break
+		}
+	}
+	return result
 }
 
 // PowerReduction - is the amount of staking tokens required for 1 unit of consensus-engine power.
