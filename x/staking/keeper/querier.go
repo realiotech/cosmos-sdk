@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -411,6 +412,8 @@ func queryHistoricalInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper, legac
 }
 
 func queryPool(ctx sdk.Context, k Keeper, legacyQuerierCdc *codec.LegacyAmino) ([]byte, error) {
+	ctx.Logger().Info("query pool")
+	fmt.Println("query pool")
 	bondedPool := k.GetBondedPool(ctx)
 	notBondedPool := k.GetNotBondedPool(ctx)
 
@@ -421,7 +424,9 @@ func queryPool(ctx sdk.Context, k Keeper, legacyQuerierCdc *codec.LegacyAmino) (
 	bondableTokens := k.BondDenomSlice(ctx)
 	bondedBalanceSum := sdk.ZeroInt()
 	notBondedBalanceSum := sdk.ZeroInt()
+	ctx.Logger().Info("bondableTokens", bondableTokens)
 	for _, x := range bondableTokens {
+		ctx.Logger().Info("inside loop", "token", x)
 		bondedBalance := k.bankKeeper.GetBalance(ctx, bondedPool.GetAddress(), x)
 		notBondedBalance := k.bankKeeper.GetBalance(ctx, notBondedPool.GetAddress(), x)
 		bondedBalanceSum = bondedBalanceSum.Add(bondedBalance.Amount)
