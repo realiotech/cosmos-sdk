@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
 	"testing"
 	"time"
 
@@ -13,6 +14,173 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
+
+func TestDelegate(t *testing.T) {
+	// setup the app
+	app := simapp.Setup(t, false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	msgServer := keeper.NewMsgServerImpl(app.StakingKeeper)
+	bondDenom := app.StakingKeeper.BondDenom(ctx)
+
+	// get pool for checks later
+	bondedPool := app.StakingKeeper.GetBondedPool(ctx)
+	moduleBalance := app.BankKeeper.GetBalance(ctx, bondedPool.GetAddress(), app.StakingKeeper.BondDenom(ctx))
+
+	// accounts
+	delAddrs := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(10000))
+	validators := app.StakingKeeper.GetValidators(ctx, 10)
+	require.Equal(t, len(validators), 1)
+
+
+	testCases := []struct {
+		Name      string
+		ExceptErr bool
+		req       types.MsgDelegate
+	}{
+		{
+			Name:      "invalid coin",
+			ExceptErr: true,
+			req: types.MsgDelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorAddress: validators[0].OperatorAddress,
+				Amount:           sdk.NewCoin("foo_coin", sdk.NewInt(4)),
+			},
+		},
+		{
+			Name:      "validator not exists",
+			ExceptErr: true,
+			req: types.MsgDelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorAddress: sdk.ValAddress(sdk.AccAddress("asdsad")).String(),
+				Amount:           sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(4)),
+			},
+		},
+		{
+			Name:      "invalid delegator address",
+			ExceptErr: true,
+			req: types.MsgDelegate{
+				DelegatorAddress: "invalid_delegator_addrtess",
+				ValidatorAddress: validators[0].OperatorAddress,
+				Amount: sdk.NewCoin("foo_coin", sdk.NewInt(4)),
+
+			},
+		},
+
+		{
+			Name:      "success",
+			ExceptErr: false,
+			req: types.MsgDelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorAddress: validators[0].OperatorAddress,
+				Amount:sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(5)),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := msgServer.Delegate(ctx, &testCase.req)
+			if testCase.ExceptErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				balanceForBondedPool := app.BankKeeper.GetBalance(ctx, sdk.AccAddress(bondedPool.GetAddress()), bondDenom)
+				require.Equal(t, balanceForBondedPool, moduleBalance.Add(testCase.req.Amount))
+			}
+		})
+	}
+}
+
+func TestRedelegate(t *testing.T) {
+	// setup the app
+	app := simapp.Setup(t, false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	msgServer := keeper.NewMsgServerImpl(app.StakingKeeper)
+
+	startTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 30)
+	startCoins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, startTokens))
+
+	// add bonded tokens to pool for delegations
+	notBondedPool := app.StakingKeeper.GetNotBondedPool(ctx)
+	require.NoError(t, testutil.FundModuleAccount(app.BankKeeper, ctx, notBondedPool.GetName(), startCoins))
+	app.AccountKeeper.SetModuleAccount(ctx, notBondedPool)
+
+	// accounts
+	delAddrs := simapp.AddTestAddrsIncremental(app, ctx, 2, sdk.NewInt(10000))
+	addrVals := simapp.ConvertAddrsToValAddrs(delAddrs)
+	validators := app.StakingKeeper.GetValidators(ctx, 10)
+	require.Equal(t, len(validators), 1)
+
+	//bring in new validator for redelegation
+	// create a validator with a self-delegation
+	validator := teststaking.NewValidator(t, addrVals[1], PKs[0])
+	valTokens := app.StakingKeeper.TokensFromConsensusPower(ctx, 10)
+	validator, issuedShares := validator.AddTokensFromDel(valTokens)
+	require.Equal(t, valTokens, issuedShares.RoundInt())
+	validator = keeper.TestingUpdateValidator(app.StakingKeeper, ctx, validator, true)
+
+	validators = app.StakingKeeper.GetValidators(ctx, 10)
+	require.Equal(t, len(validators), 2)
+
+	// testing unhappy path here as the keeper tests has coverage on success
+	testCases := []struct {
+		Name      string
+		ExceptErr bool
+		req       types.MsgBeginRedelegate
+	}{
+		{
+			Name:      "invalid coin",
+			ExceptErr: true,
+			req: types.MsgBeginRedelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorSrcAddress: validators[0].OperatorAddress,
+				ValidatorDstAddress: validators[1].OperatorAddress,
+				Amount:           sdk.NewCoin("foo_coin", sdk.NewInt(4)),
+			},
+		},
+		{
+			Name:      "invalid src validator addr",
+			ExceptErr: true,
+			req: types.MsgBeginRedelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorSrcAddress: sdk.ValAddress(sdk.AccAddress("asdsad")).String(),
+				ValidatorDstAddress: validators[1].OperatorAddress,
+				Amount:           sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(4)),
+			},
+		},
+		{
+			Name:      "dst validator not exists",
+			ExceptErr: true,
+			req: types.MsgBeginRedelegate{
+				DelegatorAddress: delAddrs[0].String(),
+				ValidatorSrcAddress: validators[0].OperatorAddress,
+				ValidatorDstAddress: sdk.ValAddress(sdk.AccAddress("asdsad")).String(),
+				Amount:           sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(4)),
+			},
+		},
+		{
+			Name:      "invalid delegator address",
+			ExceptErr: true,
+			req: types.MsgBeginRedelegate{
+				DelegatorAddress:    "invalid_delegator_addrtess",
+				ValidatorSrcAddress: validators[0].OperatorAddress,
+				ValidatorDstAddress: validators[1].OperatorAddress,
+				Amount:              sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(4)),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.Name, func(t *testing.T) {
+			_, err := msgServer.BeginRedelegate(ctx, &testCase.req)
+			if testCase.ExceptErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
 
 func TestCancelUnbondingDelegation(t *testing.T) {
 	// setup the app
