@@ -230,6 +230,12 @@ func (k msgServer) Delegate(goCtx context.Context, msg *types.MsgDelegate) (*typ
 		)
 	}
 
+	if msg.Amount.Denom != validator.BondDenom {
+		return nil, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest, "validator does not support delegation with coin: got %s", msg.Amount.Denom,
+		)
+	}
+
 	// NOTE: source funds are always unbonded
 	newShares, err := k.Keeper.Delegate(ctx, delegatorAddress, msg.Amount, types.Unbonded, validator, true)
 	if err != nil {
@@ -271,6 +277,10 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 	if err != nil {
 		return nil, err
 	}
+	valDstAddr, err := sdk.ValAddressFromBech32(msg.ValidatorDstAddress)
+	if err != nil {
+		return nil, err
+	}
 	delegatorAddress, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
 	if err != nil {
 		return nil, err
@@ -288,9 +298,16 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 		)
 	}
 
-	valDstAddr, err := sdk.ValAddressFromBech32(msg.ValidatorDstAddress)
-	if err != nil {
-		return nil, err
+	// lookup dst val here to validate token early
+	validatorDst, found := k.GetValidator(ctx, valDstAddr)
+	if !found {
+		return nil, types.ErrNoValidatorFound
+	}
+
+	if msg.Amount.Denom != validatorDst.BondDenom {
+		return nil, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest, "validator does not support redelegation with coin: got %s", msg.Amount.Denom,
+		)
 	}
 
 	completionTime, err := k.BeginRedelegation(
@@ -350,7 +367,12 @@ func (k msgServer) Undelegate(goCtx context.Context, msg *types.MsgUndelegate) (
 		return nil, err
 	}
 
-	if supported := k.IsBondDenomSupported(ctx, msg.Amount.Denom); !supported {
+	validator, found := k.GetValidator(ctx, addr)
+	if !found {
+		return nil, types.ErrNoValidatorFound
+	}
+
+	if msg.Amount.Denom != validator.BondDenom {
 		return nil, sdkerrors.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s", msg.Amount.Denom,
 		)
