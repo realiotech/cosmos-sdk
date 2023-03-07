@@ -17,10 +17,7 @@ import (
 type SendKeeper interface {
 	ViewKeeper
 
-	AppendSendRestriction(restriction SendRestrictionFn)
-	PrependSendRestriction(restriction SendRestrictionFn)
-
-	InputOutputCoins(ctx sdk.Context, input types.Input, outputs []types.Output) error
+	InputOutputCoins(ctx sdk.Context, inputs []types.Input, outputs []types.Output) error
 	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 
 	GetParams(ctx sdk.Context) types.Params
@@ -46,32 +43,19 @@ type BaseSendKeeper struct {
 
 	// list of addresses that are restricted from receiving transactions
 	blockedAddrs map[string]bool
-
-	sendRestriction *SendRestriction
 }
 
 func NewBaseSendKeeper(
 	cdc codec.BinaryCodec, storeKey storetypes.StoreKey, ak types.AccountKeeper, paramSpace paramtypes.Subspace, blockedAddrs map[string]bool,
 ) BaseSendKeeper {
 	return BaseSendKeeper{
-		BaseViewKeeper:  NewBaseViewKeeper(cdc, storeKey, ak),
-		cdc:             cdc,
-		ak:              ak,
-		storeKey:        storeKey,
-		paramSpace:      paramSpace,
-		blockedAddrs:    blockedAddrs,
-		sendRestriction: NewSendRestriction(),
+		BaseViewKeeper: NewBaseViewKeeper(cdc, storeKey, ak),
+		cdc:            cdc,
+		ak:             ak,
+		storeKey:       storeKey,
+		paramSpace:     paramSpace,
+		blockedAddrs:   blockedAddrs,
 	}
-}
-
-// AppendSendRestriction adds the provided SendRestrictionFn to run after previously provided restrictions.
-func (k BaseSendKeeper) AppendSendRestriction(restriction SendRestrictionFn) {
-	k.sendRestriction.Append(restriction)
-}
-
-// PrependSendRestriction adds the provided SendRestrictionFn to run before previously provided restrictions.
-func (k BaseSendKeeper) PrependSendRestriction(restriction SendRestrictionFn) {
-	k.sendRestriction.Prepend(restriction)
 }
 
 // GetParams returns the total set of bank parameters.
@@ -85,47 +69,42 @@ func (k BaseSendKeeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// InputOutputCoins performs multi-send functionality. It accepts an
-// input that corresponds to a series of outputs. It returns an error if the
-// input and outputs don't line up or if any single transfer of tokens fails.
-func (k BaseSendKeeper) InputOutputCoins(ctx sdk.Context, input types.Input, outputs []types.Output) error {
+// InputOutputCoins performs multi-send functionality. It accepts a series of
+// inputs that correspond to a series of outputs. It returns an error if the
+// inputs and outputs don't lineup or if any single transfer of tokens fails.
+func (k BaseSendKeeper) InputOutputCoins(ctx sdk.Context, inputs []types.Input, outputs []types.Output) error {
 	// Safety check ensuring that when sending coins the keeper must maintain the
 	// Check supply invariant and validity of Coins.
-	if err := types.ValidateInputOutputs(input, outputs); err != nil {
+	if err := types.ValidateInputsOutputs(inputs, outputs); err != nil {
 		return err
 	}
 
-	inAddress, err := sdk.AccAddressFromBech32(input.Address)
-	if err != nil {
-		return err
-	}
+	for _, in := range inputs {
+		inAddress, err := sdk.AccAddressFromBech32(in.Address)
+		if err != nil {
+			return err
+		}
 
-	err = k.subUnlockedCoins(ctx, inAddress, input.Coins)
-	if err != nil {
-		return err
-	}
+		err = k.subUnlockedCoins(ctx, inAddress, in.Coins)
+		if err != nil {
+			return err
+		}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(types.AttributeKeySender, input.Address),
-		),
-	)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				sdk.EventTypeMessage,
+				sdk.NewAttribute(types.AttributeKeySender, in.Address),
+			),
+		)
+	}
 
 	for _, out := range outputs {
 		outAddress, err := sdk.AccAddressFromBech32(out.Address)
 		if err != nil {
 			return err
 		}
-
-		if k.sendRestriction.Fn != nil {
-			outAddress, err = k.sendRestriction.Fn(ctx, inAddress, outAddress, out.Coins)
-			if err != nil {
-				return err
-			}
-		}
-
-		if err := k.addCoins(ctx, outAddress, out.Coins); err != nil {
+		err = k.addCoins(ctx, outAddress, out.Coins)
+		if err != nil {
 			return err
 		}
 
@@ -154,14 +133,6 @@ func (k BaseSendKeeper) InputOutputCoins(ctx sdk.Context, input types.Input, out
 // SendCoins transfers amt coins from a sending account to a receiving account.
 // An error is returned upon failure.
 func (k BaseSendKeeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
-	if k.sendRestriction.Fn != nil {
-		var err error
-		toAddr, err = k.sendRestriction.Fn(ctx, fromAddr, toAddr, amt)
-		if err != nil {
-			return err
-		}
-	}
-
 	err := k.subUnlockedCoins(ctx, fromAddr, amt)
 	if err != nil {
 		return err
@@ -316,7 +287,6 @@ func (k BaseSendKeeper) setBalance(ctx sdk.Context, addr sdk.AccAddress, balance
 		if err != nil {
 			return err
 		}
-
 		accountStore.Set([]byte(balance.Denom), amount)
 
 		// Store a reverse index from denomination to account address with a

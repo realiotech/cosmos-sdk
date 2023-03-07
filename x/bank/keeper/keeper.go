@@ -61,6 +61,8 @@ type BaseKeeper struct {
 	mintCoinsRestrictionFn MintingRestrictionFn
 }
 
+type MintingRestrictionFn func(ctx sdk.Context, coins sdk.Coins) error
+
 // GetPaginatedTotalSupply queries for the supply, ignoring 0 coins, with a given pagination
 func (k BaseKeeper) GetPaginatedTotalSupply(ctx sdk.Context, pagination *query.PageRequest) (sdk.Coins, *query.PageResponse, error) {
 	store := ctx.KVStore(k.storeKey)
@@ -110,7 +112,7 @@ func NewBaseKeeper(
 		cdc:                    cdc,
 		storeKey:               storeKey,
 		paramSpace:             paramSpace,
-		mintCoinsRestrictionFn: NoOpMintingRestrictionFn,
+		mintCoinsRestrictionFn: func(ctx sdk.Context, coins sdk.Coins) error { return nil },
 	}
 }
 
@@ -120,7 +122,18 @@ func NewBaseKeeper(
 //
 //	bankKeeper.WithMintCoinsRestriction(restriction1).WithMintCoinsRestriction(restriction2)
 func (k BaseKeeper) WithMintCoinsRestriction(check MintingRestrictionFn) BaseKeeper {
-	k.mintCoinsRestrictionFn = check.Then(k.mintCoinsRestrictionFn)
+	oldRestrictionFn := k.mintCoinsRestrictionFn
+	k.mintCoinsRestrictionFn = func(ctx sdk.Context, coins sdk.Coins) error {
+		err := check(ctx, coins)
+		if err != nil {
+			return err
+		}
+		err = oldRestrictionFn(ctx, coins)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	return k
 }
 

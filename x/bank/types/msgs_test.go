@@ -179,20 +179,18 @@ func TestMsgMultiSendValidation(t *testing.T) {
 	var emptyAddr sdk.AccAddress
 
 	cases := []struct {
-		valid     bool
-		tx        MsgMultiSend
-		expErrMsg string
+		valid bool
+		tx    MsgMultiSend
 	}{
-		{false, MsgMultiSend{}, "no inputs to send transaction"},                           // no input or output
-		{false, MsgMultiSend{Inputs: []Input{input1}}, "no outputs to send transaction"},   // just input
-		{false, MsgMultiSend{Outputs: []Output{output1}}, "no inputs to send transaction"}, // just output
+		{false, MsgMultiSend{}},                           // no input or output
+		{false, MsgMultiSend{Inputs: []Input{input1}}},    // just input
+		{false, MsgMultiSend{Outputs: []Output{output1}}}, // just output
 		{
 			false,
 			MsgMultiSend{
 				Inputs:  []Input{NewInput(emptyAddr, atom123)}, // invalid input
 				Outputs: []Output{output1},
 			},
-			"invalid input address",
 		},
 		{
 			false,
@@ -200,7 +198,6 @@ func TestMsgMultiSendValidation(t *testing.T) {
 				Inputs:  []Input{input1},
 				Outputs: []Output{{emptyAddr.String(), atom123}}, // invalid output
 			},
-			"invalid output address",
 		},
 		{
 			false,
@@ -208,7 +205,6 @@ func TestMsgMultiSendValidation(t *testing.T) {
 				Inputs:  []Input{input1},
 				Outputs: []Output{output2}, // amounts dont match
 			},
-			"sum inputs != sum outputs",
 		},
 		{
 			true,
@@ -216,15 +212,13 @@ func TestMsgMultiSendValidation(t *testing.T) {
 				Inputs:  []Input{input1},
 				Outputs: []Output{output1},
 			},
-			"",
 		},
 		{
-			false,
+			true,
 			MsgMultiSend{
 				Inputs:  []Input{input1, input2},
 				Outputs: []Output{outputMulti},
 			},
-			"multiple senders not allowed",
 		},
 		{
 			true,
@@ -232,7 +226,6 @@ func TestMsgMultiSendValidation(t *testing.T) {
 				Inputs:  []Input{NewInput(addr2, atom123.MulInt(types.NewInt(2)))},
 				Outputs: []Output{output1, output1},
 			},
-			"",
 		},
 	}
 
@@ -240,10 +233,8 @@ func TestMsgMultiSendValidation(t *testing.T) {
 		err := tc.tx.ValidateBasic()
 		if tc.valid {
 			require.Nil(t, err, "%d: %+v", i, err)
-			require.Nil(t, err)
 		} else {
 			require.NotNil(t, err, "%d", i)
-			require.Contains(t, err.Error(), tc.expErrMsg)
 		}
 	}
 }

@@ -73,22 +73,17 @@ func (msg MsgMultiSend) Type() string { return TypeMsgMultiSend }
 
 // ValidateBasic Implements Msg.
 func (msg MsgMultiSend) ValidateBasic() error {
-	// this just makes sure the input and all the outputs are properly formatted,
+	// this just makes sure all the inputs and outputs are properly formatted,
 	// not that they actually have the money inside
-
 	if len(msg.Inputs) == 0 {
 		return ErrNoInputs
-	}
-
-	if len(msg.Inputs) != 1 {
-		return ErrMultipleSenders
 	}
 
 	if len(msg.Outputs) == 0 {
 		return ErrNoOutputs
 	}
 
-	return ValidateInputOutputs(msg.Inputs[0], msg.Outputs)
+	return ValidateInputsOutputs(msg.Inputs, msg.Outputs)
 }
 
 // GetSignBytes Implements Msg.
@@ -161,15 +156,18 @@ func NewOutput(addr sdk.AccAddress, coins sdk.Coins) Output {
 	}
 }
 
-// ValidateInputOutputs validates that each respective input and output is
+// ValidateInputsOutputs validates that each respective input and output is
 // valid and that the sum of inputs is equal to the sum of outputs.
-func ValidateInputOutputs(input Input, outputs []Output) error {
+func ValidateInputsOutputs(inputs []Input, outputs []Output) error {
 	var totalIn, totalOut sdk.Coins
 
-	if err := input.ValidateBasic(); err != nil {
-		return err
+	for _, in := range inputs {
+		if err := in.ValidateBasic(); err != nil {
+			return err
+		}
+
+		totalIn = totalIn.Add(in.Coins...)
 	}
-	totalIn = input.Coins
 
 	for _, out := range outputs {
 		if err := out.ValidateBasic(); err != nil {
