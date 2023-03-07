@@ -354,14 +354,13 @@ func (suite *IntegrationTestSuite) TestInputOutputNewAccount() {
 	suite.Require().Nil(app.AccountKeeper.GetAccount(ctx, addr2))
 	suite.Require().Empty(app.BankKeeper.GetAllBalances(ctx, addr2))
 
-	inputs := []types.Input{
-		{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
-	}
+	input := types.Input{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))}
+
 	outputs := []types.Output{
 		{Address: addr2.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
 	}
 
-	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	expected := sdk.NewCoins(newFooCoin(30), newBarCoin(10))
 	acc2Balances := app.BankKeeper.GetAllBalances(ctx, addr2)
@@ -385,30 +384,26 @@ func (suite *IntegrationTestSuite) TestInputOutputCoins() {
 	acc3 := app.AccountKeeper.NewAccountWithAddress(ctx, addr3)
 	app.AccountKeeper.SetAccount(ctx, acc3)
 
-	inputs := []types.Input{
-		{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
-		{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
-	}
+	input := types.Input{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(60), newBarCoin(20))}
+
 	outputs := []types.Output{
 		{Address: addr2.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
 		{Address: addr3.String(), Coins: sdk.NewCoins(newFooCoin(30), newBarCoin(10))},
 	}
 
-	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, inputs, []types.Output{}))
-	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, input, []types.Output{}))
+	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr1, balances))
 
-	insufficientInputs := []types.Input{
-		{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(300), newBarCoin(100))},
-		{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(300), newBarCoin(100))},
-	}
+	insufficientInput := types.Input{Address: addr1.String(), Coins: sdk.NewCoins(newFooCoin(300), newBarCoin(100))}
+
 	insufficientOutputs := []types.Output{
 		{Address: addr2.String(), Coins: sdk.NewCoins(newFooCoin(300), newBarCoin(100))},
 		{Address: addr3.String(), Coins: sdk.NewCoins(newFooCoin(300), newBarCoin(100))},
 	}
-	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, insufficientInputs, insufficientOutputs))
-	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, insufficientInput, insufficientOutputs))
+	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	acc1Balances := app.BankKeeper.GetAllBalances(ctx, addr1)
 	expected := sdk.NewCoins(newFooCoin(30), newBarCoin(10))
@@ -602,58 +597,59 @@ func (suite *IntegrationTestSuite) TestMsgMultiSendEvents() {
 	app.AccountKeeper.SetAccount(ctx, acc)
 	app.AccountKeeper.SetAccount(ctx, acc2)
 
+	coins := sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50), sdk.NewInt64Coin(barDenom, 100))
 	newCoins := sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50))
 	newCoins2 := sdk.NewCoins(sdk.NewInt64Coin(barDenom, 100))
-	inputs := []types.Input{
-		{Address: addr.String(), Coins: newCoins},
-		{Address: addr2.String(), Coins: newCoins2},
-	}
+	input := types.Input{Address: addr.String(), Coins: coins}
 	outputs := []types.Output{
 		{Address: addr3.String(), Coins: newCoins},
 		{Address: addr4.String(), Coins: newCoins2},
 	}
 
-	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	events := ctx.EventManager().ABCIEvents()
 	suite.Require().Equal(0, len(events))
 
 	// Set addr's coins but not addr2's coins
-	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50))))
-	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr, newCoins))
+	suite.Require().Error(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	events = ctx.EventManager().ABCIEvents()
-	suite.Require().Equal(8, len(events)) // 7 events because account funding causes extra minting + coin_spent + coin_recv events
+	suite.Require().Equal(6, len(events)) // 6 events because account funding causes extra minting + coin_spent + coin_recv events
 
 	event1 := sdk.Event{
-		Type:       sdk.EventTypeMessage,
+		Type:       types.EventTypeCoinReceived,
 		Attributes: []abci.EventAttribute{},
 	}
 	event1.Attributes = append(
 		event1.Attributes,
-		abci.EventAttribute{Key: []byte(types.AttributeKeySender), Value: []byte(addr.String())},
+		abci.EventAttribute{Key: []byte(types.AttributeKeyReceiver), Value: []byte(addr.String())},
+		abci.EventAttribute{Key: []byte(sdk.AttributeKeyAmount), Value: []byte(newCoins.String())},
 	)
-	suite.Require().Equal(abci.Event(event1), events[7])
+
+	suite.Require().Equal(abci.Event(event1), events[3])
 
 	// Set addr's coins and addr2's coins
-	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50))))
+	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr, sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50), sdk.NewInt64Coin(barDenom, 100))))
 	newCoins = sdk.NewCoins(sdk.NewInt64Coin(fooDenom, 50))
 
 	suite.Require().NoError(testutil.FundAccount(app.BankKeeper, ctx, addr2, sdk.NewCoins(sdk.NewInt64Coin(barDenom, 100))))
 	newCoins2 = sdk.NewCoins(sdk.NewInt64Coin(barDenom, 100))
 
-	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, inputs, outputs))
+	suite.Require().NoError(app.BankKeeper.InputOutputCoins(ctx, input, outputs))
 
 	events = ctx.EventManager().ABCIEvents()
-	suite.Require().Equal(28, len(events)) // 25 due to account funding + coin_spent + coin_recv events
+	suite.Require().Equal(24, len(events)) // 24 due to account funding + coin_spent + coin_recv events
 
 	event2 := sdk.Event{
-		Type:       sdk.EventTypeMessage,
+		Type:       types.EventTypeCoinReceived,
 		Attributes: []abci.EventAttribute{},
 	}
 	event2.Attributes = append(
 		event2.Attributes,
-		abci.EventAttribute{Key: []byte(types.AttributeKeySender), Value: []byte(addr2.String())},
+		abci.EventAttribute{Key: []byte(types.AttributeKeyReceiver), Value: []byte(addr2.String())},
+		abci.EventAttribute{Key: []byte(sdk.AttributeKeyAmount), Value: []byte(newCoins2.String())},
 	)
 	event3 := sdk.Event{
 		Type:       types.EventTypeTransfer,
@@ -678,11 +674,10 @@ func (suite *IntegrationTestSuite) TestMsgMultiSendEvents() {
 		event4.Attributes,
 		abci.EventAttribute{Key: []byte(sdk.AttributeKeyAmount), Value: []byte(newCoins2.String())},
 	)
-	// events are shifted due to the funding account events
-	suite.Require().Equal(abci.Event(event1), events[21])
-	suite.Require().Equal(abci.Event(event2), events[23])
-	suite.Require().Equal(abci.Event(event3), events[25])
-	suite.Require().Equal(abci.Event(event4), events[27])
+	//events are shifted due to the funding account events
+	suite.Require().Equal(abci.Event(event2), events[15])
+	suite.Require().Equal(abci.Event(event3), events[21])
+	suite.Require().Equal(abci.Event(event4), events[23])
 }
 
 func (suite *IntegrationTestSuite) TestSpendableCoins() {
