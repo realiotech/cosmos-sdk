@@ -37,9 +37,14 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
-(x/bank) [#19](https://github.com/realiotech/cosmos-sdk/pull/19) Allow injection of restrictions on transfers using `AppendSendRestriction` or `PrependSendRestriction`.
 
 # Realio Specific Releases
+
+## [v0.46.10-realio-1](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-1) - 2022-03-08
+
+### Features
+* (x/bank) [#19](https://github.com/realiotech/cosmos-sdk/pull/19) Allow injection of restrictions on transfers using `AppendSendRestriction` or `PrependSendRestriction`.
+* (x/staking) [8533dde](https://github.com/realiotech/cosmos-sdk/commit/8533dde11e3064f8df5456c55be0c9df322b1561#diff-95a734b71c16045344ae368e27bcc4f7e3c7fc4e31f7398bc4d128605f7027bb) Staking module now allows multiple bond tokens
 
 # Cosmos Specific Releases
 
