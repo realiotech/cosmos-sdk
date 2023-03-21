@@ -40,7 +40,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Realio Specific Releases
 
-## [v0.46.10-realio-1](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-1) - 2022-03-08
+## [v0.46.10-realio-2](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-2) - 2022-03-21
 
 ### Features
 * (x/bank) [#19](https://github.com/realiotech/cosmos-sdk/pull/19) Allow injection of restrictions on transfers using `AppendSendRestriction` or `PrependSendRestriction`.
