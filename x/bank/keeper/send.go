@@ -8,9 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/bank/types"
-	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -158,16 +156,10 @@ func (k BaseSendKeeper) InputOutputCoins(ctx sdk.Context, input types.Input, out
 func (k BaseSendKeeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	// process restriction if they exist
 	if k.sendRestriction.Fn != nil {
-		isMint := fromAddr.Equals(k.ak.GetModuleAddress("mint")) && toAddr.Equals(k.ak.GetModuleAddress(authtypes.FeeCollectorName))
-		isFeeDistribution := fromAddr.Equals(k.ak.GetModuleAddress(authtypes.FeeCollectorName)) && toAddr.Equals(k.ak.GetModuleAddress(disttypes.ModuleName))
-
-		// block rewards mint and fee distribution are allowed to bypass restrictions
-		if !isMint && !isFeeDistribution {
-			var err error
-			toAddr, err = k.sendRestriction.Fn(ctx, fromAddr, toAddr, amt)
-			if err != nil {
-				return err
-			}
+		var err error
+		toAddr, err = k.sendRestriction.Fn(ctx, fromAddr, toAddr, amt)
+		if err != nil {
+			return err
 		}
 	}
 
