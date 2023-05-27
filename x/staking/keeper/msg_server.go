@@ -304,9 +304,15 @@ func (k msgServer) BeginRedelegate(goCtx context.Context, msg *types.MsgBeginRed
 		return nil, types.ErrNoValidatorFound
 	}
 
-	if msg.Amount.Denom != validatorDst.BondDenom {
+	// lookup src val here to validate token early
+	validatorSrc, found := k.GetValidator(ctx, valSrcAddr)
+	if !found {
+		return nil, types.ErrNoValidatorFound
+	}
+
+	if msg.Amount.Denom != validatorDst.BondDenom || msg.Amount.Denom != validatorSrc.BondDenom {
 		return nil, sdkerrors.Wrapf(
-			sdkerrors.ErrInvalidRequest, "validator does not support redelegation with coin: got %s", msg.Amount.Denom,
+			sdkerrors.ErrInvalidRequest, "can't redelegate to validator with different bond denom",
 		)
 	}
 
