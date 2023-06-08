@@ -40,7 +40,13 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Realio Specific Releases
 
-## [v0.46.10-realio-2](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-2) - 2022-03-21
+## [v0.46.10-realio-3](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-3) - 2023-05-30
+
+### Bug Fixes
+
+* [#29](https://github.com/realiotech/cosmos-sdk/pull/29) `BeginRedelegate` check destination and source validators for bond denom verification
+
+## [v0.46.10-realio-2](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.10-realio-2) - 2023-03-21
 
 ### Features
 * (x/bank) [#19](https://github.com/realiotech/cosmos-sdk/pull/19) Allow injection of restrictions on transfers using `AppendSendRestriction` or `PrependSendRestriction`.
