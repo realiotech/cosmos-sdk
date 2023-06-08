@@ -3,7 +3,6 @@ package snapshots
 import (
 	"crypto/sha256"
 	"encoding/binary"
-	"hash"
 	"io"
 	"math"
 	"os"
@@ -15,7 +14,6 @@ import (
 	db "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/snapshots/types"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -166,8 +164,8 @@ func (s *Store) Load(height uint64, format uint32) (*types.Snapshot, <-chan io.R
 
 // LoadChunk loads a chunk from disk, or returns nil if it does not exist. The caller must call
 // Close() on it when done.
-func (s *Store) LoadChunk(height uint64, format, chunk uint32) (io.ReadCloser, error) {
-	path := s.PathChunk(height, format, chunk)
+func (s *Store) LoadChunk(height uint64, format uint32, chunk uint32) (io.ReadCloser, error) {
+	path := s.pathChunk(height, format, chunk)
 	file, err := os.Open(path)
 	if os.IsNotExist(err) {
 		return nil, nil
@@ -176,8 +174,8 @@ func (s *Store) LoadChunk(height uint64, format, chunk uint32) (io.ReadCloser, e
 }
 
 // loadChunkFile loads a chunk from disk, and errors if it does not exist.
-func (s *Store) loadChunkFile(height uint64, format, chunk uint32) (io.ReadCloser, error) {
-	path := s.PathChunk(height, format, chunk)
+func (s *Store) loadChunkFile(height uint64, format uint32, chunk uint32) (io.ReadCloser, error) {
+	path := s.pathChunk(height, format, chunk)
 	return os.Open(path)
 }
 
@@ -261,57 +259,38 @@ func (s *Store) Save(
 	snapshotHasher := sha256.New()
 	chunkHasher := sha256.New()
 	for chunkBody := range chunks {
-		defer chunkBody.Close() //nolint:staticcheck
+		defer chunkBody.Close() // nolint: staticcheck
 		dir := s.pathSnapshot(height, format)
 		err = os.MkdirAll(dir, 0o755)
 		if err != nil {
 			return nil, sdkerrors.Wrapf(err, "failed to create snapshot directory %q", dir)
 		}
-
-		if err := s.saveChunk(chunkBody, index, snapshot, chunkHasher, snapshotHasher); err != nil {
-			return nil, err
+		path := s.pathChunk(height, format, index)
+		file, err := os.Create(path)
+		if err != nil {
+			return nil, sdkerrors.Wrapf(err, "failed to create snapshot chunk file %q", path)
 		}
+		defer file.Close() // nolint: staticcheck
+
+		chunkHasher.Reset()
+		_, err = io.Copy(io.MultiWriter(file, chunkHasher, snapshotHasher), chunkBody)
+		if err != nil {
+			return nil, sdkerrors.Wrapf(err, "failed to generate snapshot chunk %v", index)
+		}
+		err = file.Close()
+		if err != nil {
+			return nil, sdkerrors.Wrapf(err, "failed to close snapshot chunk %v", index)
+		}
+		err = chunkBody.Close()
+		if err != nil {
+			return nil, sdkerrors.Wrapf(err, "failed to close snapshot chunk %v", index)
+		}
+		snapshot.Metadata.ChunkHashes = append(snapshot.Metadata.ChunkHashes, chunkHasher.Sum(nil))
 		index++
 	}
 	snapshot.Chunks = index
 	snapshot.Hash = snapshotHasher.Sum(nil)
 	return snapshot, s.saveSnapshot(snapshot)
-}
-
-// saveChunk saves the given chunkBody with the given index to its appropriate path on disk.
-// The hash of the chunk is appended to the snapshot's metadata,
-// and the overall snapshot hash is updated with the chunk content too.
-func (s *Store) saveChunk(chunkBody io.ReadCloser, index uint32, snapshot *types.Snapshot, chunkHasher, snapshotHasher hash.Hash) error {
-	defer chunkBody.Close()
-
-	path := s.PathChunk(snapshot.Height, snapshot.Format, index)
-	chunkFile, err := os.Create(path)
-	if err != nil {
-		return sdkerrors.Wrapf(err, "failed to create snapshot chunk file %q", path)
-	}
-	defer chunkFile.Close()
-
-	chunkHasher.Reset()
-	if _, err := io.Copy(io.MultiWriter(chunkFile, chunkHasher, snapshotHasher), chunkBody); err != nil {
-		return sdkerrors.Wrapf(err, "failed to generate snapshot chunk %d", index)
-	}
-
-	if err := chunkFile.Close(); err != nil {
-		return sdkerrors.Wrapf(err, "failed to close snapshot chunk file %d", index)
-	}
-
-	if err := chunkBody.Close(); err != nil {
-		return sdkerrors.Wrapf(err, "failed to close snapshot chunk body %d", index)
-	}
-
-	snapshot.Metadata.ChunkHashes = append(snapshot.Metadata.ChunkHashes, chunkHasher.Sum(nil))
-	return nil
-}
-
-// saveChunkContent save the chunk to disk
-func (s *Store) saveChunkContent(chunk []byte, index uint32, snapshot *types.Snapshot) error {
-	path := s.PathChunk(snapshot.Height, snapshot.Format, index)
-	return os.WriteFile(path, chunk, 0o600)
 }
 
 // saveSnapshot saves snapshot metadata to the database.
@@ -334,8 +313,8 @@ func (s *Store) pathSnapshot(height uint64, format uint32) string {
 	return filepath.Join(s.pathHeight(height), strconv.FormatUint(uint64(format), 10))
 }
 
-// PathChunk generates a snapshot chunk path.
-func (s *Store) PathChunk(height uint64, format, chunk uint32) string {
+// pathChunk generates a snapshot chunk path.
+func (s *Store) pathChunk(height uint64, format uint32, chunk uint32) string {
 	return filepath.Join(s.pathSnapshot(height, format), strconv.FormatUint(uint64(chunk), 10))
 }
 

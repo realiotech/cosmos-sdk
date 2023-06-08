@@ -23,7 +23,6 @@ dist
 tools-stamp
 buf-stamp
 artifacts
-tools/
 
 # Data - ideally these don't exist
 baseapp/data/*

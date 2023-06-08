@@ -42,8 +42,7 @@ func (k Keeper) InitGenesis(ctx types.Context, cdc codec.JSONCodec, data json.Ra
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the group module's exported genesis.
-func (k Keeper) ExportGenesis(ctx types.Context, _ codec.JSONCodec) *group.GenesisState {
+func (k Keeper) ExportGenesis(ctx types.Context, cdc codec.JSONCodec) *group.GenesisState {
 	genesisState := group.NewGenesisState()
 
 	var groups []*group.GroupInfo
