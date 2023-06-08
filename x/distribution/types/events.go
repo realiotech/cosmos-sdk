@@ -11,6 +11,6 @@ const (
 
 	AttributeKeyWithdrawAddress = "withdraw_address"
 	AttributeKeyValidator       = "validator"
-	AttributeKeyDelegator       = "delegator"
-	AttributeValueCategory      = ModuleName
+
+	AttributeValueCategory = ModuleName
 )

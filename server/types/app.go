@@ -15,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
-	"github.com/cosmos/cosmos-sdk/snapshots"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -56,12 +55,6 @@ type (
 
 		// Return the multistore instance
 		CommitMultiStore() sdk.CommitMultiStore
-
-		// Return the snapshot manager
-		SnapshotManager() *snapshots.Manager
-
-		// Close is called in start cmd to gracefully cleanup resources.
-		Close() error
 	}
 
 	// ApplicationQueryService defines an extension of the Application interface
