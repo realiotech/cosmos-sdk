@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"cosmossdk.io/math"
 )
 
 // InitGenesis sets the pool and parameters for the provided keeper.  For each
@@ -15,8 +16,8 @@ import (
 // data. Finally, it updates the bonded validators.
 // Returns final validator set after applying all declaration and delegations
 func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []abci.ValidatorUpdate) {
-	bondedTokens := sdk.ZeroInt()
-	notBondedTokens := sdk.ZeroInt()
+	bonded := make(map[string]math.Int)
+	notBonded := make(map[string]math.Int)
 
 	// We need to pretend to be "n blocks before genesis", where "n" is the
 	// validator update delay, so that e.g. slashing periods are correctly
@@ -46,14 +47,21 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		if validator.IsUnbonding() {
 			k.InsertUnbondingValidatorQueue(ctx, validator)
 		}
+		denom := validator.GetBondDenom()
 
 		switch validator.GetStatus() {
 		case types.Bonded:
-			bondedTokens = bondedTokens.Add(validator.GetTokens())
-
+			if val, ok := bonded[denom]; ok {
+				bonded[denom] = val.Add(validator.GetTokens())
+			} else {
+				bonded[denom]= validator.GetTokens()
+			}
 		case types.Unbonding, types.Unbonded:
-			notBondedTokens = notBondedTokens.Add(validator.GetTokens())
-
+			if val, ok := bonded[denom]; ok {
+				notBonded[denom] = val.Add(validator.GetTokens())
+			} else {
+				notBonded[denom]= validator.GetTokens()
+			}
 		default:
 			panic("invalid validator status")
 		}
@@ -84,7 +92,11 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 
 		for _, entry := range ubd.Entries {
 			k.InsertUBDQueue(ctx, ubd, entry.CompletionTime)
-			notBondedTokens = notBondedTokens.Add(entry.Balance.Amount)
+			if val, ok := bonded[entry.Balance.Denom]; ok {
+				notBonded[entry.Balance.Denom] = val.Add(entry.Balance.Amount)
+			} else {
+				notBonded[entry.Balance.Denom]= entry.Balance.Amount
+			}
 		}
 	}
 
@@ -108,14 +120,15 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		k.authKeeper.SetModuleAccount(ctx, bondedPool)
 	}
 
-	bondedBalanceSum := sdk.ZeroInt()
-	for _, c := range bondedBalance {
-		bondedBalanceSum = bondedBalanceSum.Add(c.Amount)
-	}
-
 	// if balance is different from bonded coins panic because genesis is most likely malformed
-	if !bondedBalanceSum.Equal(bondedTokens) {
-		panic(fmt.Sprintf("bonded pool balance is different from bonded coins: %s <-> %s", bondedBalanceSum, bondedTokens))
+	for _, c := range bondedBalance {
+		if val, ok := bonded[c.Denom]; ok {
+			if !val.Equal(c.Amount) {
+				panic(fmt.Sprintf("bonded pool balance of %s is different from bonded coins: %s <-> %s", c.Denom, c.Amount, val))
+			}
+		} else {
+			panic(fmt.Sprintf("bonded pool balance of %s is different from bonded coins: %s <-> %s", c.Denom, c.Amount, "0"))
+		}
 	}
 
 	notBondedPool := k.GetNotBondedPool(ctx)
@@ -128,13 +141,15 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) (res []ab
 		k.authKeeper.SetModuleAccount(ctx, notBondedPool)
 	}
 
-	unBondedBalanceSum := sdk.ZeroInt()
-	for _, c := range notBondedBalance {
-		unBondedBalanceSum = unBondedBalanceSum.Add(c.Amount)
-	}
 	// if balance is different from non bonded coins panic because genesis is most likely malformed
-	if !unBondedBalanceSum.Equal(notBondedTokens) {
-		panic(fmt.Sprintf("not bonded pool balance is different from not bonded coins: %s <-> %s", unBondedBalanceSum, notBondedTokens))
+	for _, c := range notBondedBalance {
+		if val, ok := notBonded[c.Denom]; ok {
+			if !val.Equal(c.Amount) {
+				panic(fmt.Sprintf("not bonded pool balance of %s is different from not bonded coins: %s <-> %s", c.Denom, c.Amount, val))
+			}
+		} else {
+			panic(fmt.Sprintf("not bonded pool balance of %s is different from not bonded coins: %s <-> %s", c.Denom, c.Amount, "0"))
+		}
 	}
 
 	// don't need to run Tendermint updates if we exported

@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"cosmossdk.io/math"
 )
 
 // RegisterInvariants registers all staking invariants
@@ -46,17 +47,26 @@ func AllInvariants(k Keeper) sdk.Invariant {
 // reflects the tokens actively bonded and not bonded
 func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 	return func(ctx sdk.Context) (string, bool) {
-		bonded := sdk.ZeroInt()
-		notBonded := sdk.ZeroInt()
+		bonded := make(map[string]math.Int)
+		notBonded := make(map[string]math.Int)
 		bondedPool := k.GetBondedPool(ctx)
 		notBondedPool := k.GetNotBondedPool(ctx)
 
 		k.IterateValidators(ctx, func(_ int64, validator types.ValidatorI) bool {
+			denom := validator.GetBondDenom()
 			switch validator.GetStatus() {
 			case types.Bonded:
-				bonded = bonded.Add(validator.GetTokens())
+				if val, ok := bonded[denom]; ok {
+					bonded[denom] = val.Add(validator.GetTokens())
+				} else {
+					bonded[denom]= validator.GetTokens()
+				}
 			case types.Unbonding, types.Unbonded:
-				notBonded = notBonded.Add(validator.GetTokens())
+				if val, ok := bonded[denom]; ok {
+					notBonded[denom] = val.Add(validator.GetTokens())
+				} else {
+					notBonded[denom]= validator.GetTokens()
+				}
 			default:
 				panic("invalid validator status")
 			}
@@ -65,24 +75,42 @@ func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 
 		k.IterateUnbondingDelegations(ctx, func(_ int64, ubd types.UnbondingDelegation) bool {
 			for _, entry := range ubd.Entries {
-				notBonded = notBonded.Add(entry.Balance.Amount)
+				if val, ok := bonded[entry.Balance.Denom]; ok {
+					notBonded[entry.Balance.Denom] = val.Add(entry.Balance.Amount)
+				} else {
+					notBonded[entry.Balance.Denom]= entry.Balance.Amount
+				}
 			}
 			return false
 		})
 
+		broken := false;
 		poolBonded := k.bankKeeper.GetAllBalances(ctx, bondedPool.GetAddress())
 		poolBondedSum := sdk.ZeroInt()
 		for _, c := range poolBonded {
 			poolBondedSum = poolBondedSum.Add(c.Amount)
+			if val, ok := bonded[c.Denom]; ok {
+				if !val.Equal(c.Amount) {
+					broken = true
+				}
+			} else {
+				broken = true
+			}
 		}
 
 		poolNotBonded := k.bankKeeper.GetAllBalances(ctx, notBondedPool.GetAddress())
 		poolNotBondedSum := sdk.ZeroInt()
+
 		for _, c := range poolNotBonded {
 			poolNotBondedSum = poolNotBondedSum.Add(c.Amount)
+			if val, ok := notBonded[c.Denom]; ok {
+				if !val.Equal(c.Amount) {
+					broken = true
+				}
+			} else {
+				broken = true
+			}
 		}
-
-		broken := !poolBondedSum.Equal(bonded) || !poolNotBondedSum.Equal(notBonded)
 
 		// Bonded tokens should equal sum of tokens with bonded validators
 		// Not-bonded tokens should equal unbonding delegations	plus tokens on unbonded validators
@@ -95,7 +123,7 @@ func ModuleAccountInvariants(k Keeper) sdk.Invariant {
 				"module accounts total (bonded + not bonded):\n"+
 				"\tModule Accounts' tokens: %v\n"+
 				"\tsum tokens:              %v\n",
-			poolBonded, bonded, poolNotBonded, notBonded, poolBondedSum.Add(poolNotBondedSum), bonded.Add(notBonded))), broken
+			poolBonded, bonded, poolNotBonded, notBonded, poolBondedSum.Add(poolNotBondedSum), poolBondedSum.Add(poolNotBondedSum))), broken
 	}
 }
 
